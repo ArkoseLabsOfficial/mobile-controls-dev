@@ -65,6 +65,11 @@ class MobileButton extends TypedMobileButton<FlxSprite>
 	public var IDs:Array<String> = [];
 
 	/**
+	 * A Unique ID for PsychEngine Notes.
+	 */
+	public var uniqueID:Int;
+
+	/**
 	 * A Small invisible bounds used for colision
 	**/
 	public var bounds:FlxSprite = new FlxSprite();

@@ -16,8 +16,8 @@ import flixel.FlxCamera;
  */
 class Hitbox extends MobileInputHandler
 {
-	public var onButtonDown:FlxTypedSignal<(MobileButton, Array<String>) -> Void> = new FlxTypedSignal<(MobileButton, Array<String>) -> Void>();
-	public var onButtonUp:FlxTypedSignal<(MobileButton, Array<String>) -> Void> = new FlxTypedSignal<(MobileButton, Array<String>) -> Void>();
+	public var onButtonDown:FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void> = new FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void>();
+	public var onButtonUp:FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void> = new FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void>();
 	public var instance:MobileInputHandler;
 	public var Hints:Array<MobileButton> = [];
 	public var buttonIndexFromName:Map<String, Int> = [];
@@ -70,6 +70,7 @@ class Hitbox extends MobileInputHandler
 			{
 				var buttonName:String = buttonData.button;
 				var buttonIDs:Array<String> = buttonData.buttonIDs;
+				var buttonUniqueID:Int = buttonData.buttonUniqueID;
 				var buttonX:Float = buttonData.x;
 				var buttonY:Float = buttonData.y;
 
@@ -78,8 +79,9 @@ class Hitbox extends MobileInputHandler
 
 				var buttonColor = buttonData.color;
 				var buttonReturn = buttonData.returnKey;
+				if (buttonData.buttonUniqueID == null) buttonUniqueID = -1; // -1 means not setted.
 
-				addHint(buttonName, buttonIDs, buttonX, buttonY, buttonWidth, buttonHeight, Util.colorFromString(buttonColor), buttonReturn);
+				addHint(buttonName, buttonIDs, buttonUniqueID, buttonX, buttonY, buttonWidth, buttonHeight, Util.colorFromString(buttonColor), buttonReturn);
 			}
 		}
 
@@ -90,9 +92,9 @@ class Hitbox extends MobileInputHandler
 	}
 
 	var countedIndex:Int = 0;
-	public function addHint(Name:String, IDs:Array<String>, X:Float, Y:Float, Width:Int, Height:Int, Color:Int = 0xFFFFFF, ?buttonReturn:String)
+	public function addHint(Name:String, IDs:Array<String>, uniqueID:Int, X:Float, Y:Float, Width:Int, Height:Int, Color:Int = 0xFFFFFF, ?buttonReturn:String)
 	{
-		var hint = createHint(IDs, X, Y, Width, Height, Color, buttonReturn);
+		var hint = createHint(IDs, uniqueID, X, Y, Width, Height, Color, buttonReturn);
 		Hints.push(hint);
 		add(hint);
 		buttonFromName.set(Name, hint);
@@ -123,7 +125,7 @@ class Hitbox extends MobileInputHandler
 		return bitmap;
 	}
 
-	public function createHint(Name:Array<String>, X:Float, Y:Float, Width:Int, Height:Int, Color:Int = 0xFFFFFF, ?Return:String, ?Map:String):MobileButton
+	public function createHint(Name:Array<String>, uniqueID:Int, X:Float, Y:Float, Width:Int, Height:Int, Color:Int = 0xFFFFFF, ?Return:String, ?Map:String):MobileButton
 	{
 		var hint:MobileButton = new MobileButton(X, Y, Return);
 		hint.loadGraphic(createHintGraphic(Width, Height, Color));
@@ -133,15 +135,16 @@ class Hitbox extends MobileInputHandler
 		hint.scrollFactor.set();
 		hint.alpha = 0.00001;
 		hint.IDs = Name;
+		hint.uniqueID = uniqueID;
 		hint.onDown.callback = function()
 		{
-			onButtonDown.dispatch(hint, Name);
+			onButtonDown.dispatch(hint, Name, uniqueID);
 			if (hint.alpha != globalAlpha)
 				hint.alpha = globalAlpha;
 		}
 		hint.onOut.callback = hint.onUp.callback = function()
 		{
-			onButtonUp.dispatch(hint, Name);
+			onButtonUp.dispatch(hint, Name, uniqueID);
 			if (hint.alpha != 0.00001)
 				hint.alpha = 0.00001;
 		}

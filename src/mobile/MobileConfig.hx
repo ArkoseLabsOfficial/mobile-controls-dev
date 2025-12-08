@@ -112,6 +112,7 @@ typedef HitboxData =
 {
 	button:String, // the button's name for checking pressed directly.
 	buttonIDs:Array<String>, // what Hitbox Button Iad should be used, If you're using a the library for PsychEngine 0.7 Versions, This is useful.
+	buttonUniqueID:Dynamic, // the button's special ID for button
 	x:Dynamic, // the button's X position on screen.
 	y:Dynamic, // the button's Y position on screen.
 	width:Dynamic, // the button's Width on screen.
@@ -124,6 +125,7 @@ typedef ButtonsData =
 {
 	button:String, // the button's name for checking pressed directly.
 	buttonIDs:Array<String>, // what MobileButton Button Iad should be used, If you're using a the library for PsychEngine 0.7 Versions, This is useful.
+	buttonUniqueID:Dynamic, // the button's special ID for button
 	graphic:String, // the graphic of the button, usually can be located in the MobilePad xml.
 	x:Float, // the button's X position on screen.
 	y:Float, // the button's Y position on screen.

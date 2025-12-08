@@ -13,7 +13,6 @@
 
 ## TODO:
 
-- [ ] Unique ID
 - [ ] GyroScope Support
 - [ ] Json x HScript Support (allow to set values with HScript in Json)
 
