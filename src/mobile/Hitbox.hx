@@ -23,29 +23,12 @@ class Hitbox extends MobileInputHandler
 	public var buttonIndexFromName:Map<String, Int> = [];
 	public var buttonFromName:Map<String, MobileButton> = [];
 	public var globalAlpha:Float = 0.7;
-	public var buttonCameras(get, set):Array<FlxCamera>;
 
 	public function getButtonIndexFromName(btnName:String)
 		return buttonIndexFromName.get(btnName);
 
 	public function getButtonFromName(btnName:String)
 		return buttonFromName.get(btnName);
-
-	@:noCompletion
-	function get_buttonCameras():Array<FlxCamera>
-	{
-		return cameras;
-	}
-
-	@:noCompletion
-	function set_buttonCameras(Value:Array<FlxCamera>):Array<FlxCamera>
-	{
-		cameras = Value;
-		for (button in Hints) {
-			button._cameras = Value;
-		}
-		return Value;
-	}
 
 	/**
 	 * Create the zone.

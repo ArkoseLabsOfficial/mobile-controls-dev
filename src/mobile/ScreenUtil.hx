@@ -55,7 +55,7 @@ class ScreenUtil
 
 class WideScreenMode extends BaseScaleMode
 {
-	public var enabled(default, set):Bool = true;
+	public var enabled(default, set):Bool = false;
 
 	override function updateGameSize(Width:Int, Height:Int):Void
 	{
