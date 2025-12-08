@@ -45,55 +45,40 @@ class Main {
 // * src/PlayState.hx
 // *
 
-import mobile.MobilePad;
-import mobile.JoyStick;
-import mobile.Hitbox;
-
+import mobile.MobileControlManager;
 class PlayState extends FlxState {
-	public var mobilePad:MobilePad;
-	public var joyStick:JoyStick;
-	public var hitbox:Hitbox;
+	var manager:MobileControlManager;
 	override function create() {
-		// MobilePad
-		mobilePad = new MobilePad('Test', 'Test');
-		var mobilePadCam:FlxCamera = new FlxCamera();
-		mobilePadCam.bgColor.alpha = 0;
-		FlxG.cameras.add(mobilePadCam, false);
-		mobilePad.buttonCameras = [mobilePadCam];
-		add(mobilePad);
+		manager = new MobileControlManager(this);
+		/* MobilePad */
+		manager.addMobilePad('Test', 'Test');
+		manager.addMobilePadCamera();
 
-		// Hitbox
-		hitbox = new Hitbox('Test');
-		var hitboxCam = new FlxCamera();
-		hitboxCam.bgColor.alpha = 0;
-		FlxG.cameras.add(hitboxCam, false);
-		hitbox.buttonCameras = [hitboxCam];
-		add(hitbox);
+		/* Hitbox */
+		manager.addHitbox('Test');
+		manager.addHitboxCamera();
 
-		// JoyStick
-		joyStick = new JoyStick(0, 0, 0, 0.25, 0.7); //Params: x, y, radius, ease, size
-		var joyStickCam = new FlxCamera();
-		joyStickCam.bgColor.alpha = 0;
-		FlxG.cameras.add(joyStickCam, false);
-		joyStick.cameras = [joyStickCam];
-		add(joyStick);
+		/* JoyStick */
+		manager.addJoyStick(0, 0, 0, 0.25, 0.7);
+		manager.addJoyStickCamera();
 	}
 	override function update(elapsed:Float) {
-		if (mobilePad.getButtonFromName('buttonA').justPressed) {
+		if (manager.mobilePad.getButtonFromName('buttonA').justPressed) {
 			trace('hello from buttonA');
 		}
 
-		if (hitbox.getButtonFromName('buttonUp').justPressed) {
+		if (manager.hitbox.getButtonFromName('buttonUp').justPressed) {
 			trace('hello from buttonUp');
 		}
 
-		if (joyStick.joyStickPressed('up')) {
+		if (manager.joyStick.joyStickPressed('up')) {
 			trace('hello from joyStick up');
 		}
 	}
 }
 
 // *
+// * A Example (Probably This Class Won't Work)
 // * src/Controls.hx
 // *
 
@@ -146,43 +131,43 @@ class Controls {
 	}
 	private function joyStickPressed(key:String):Bool
 	{
-		if (key != null && requestedInstance.joyStick != null)
-			if (requestedInstance.joyStick.joyStickPressed(key) == true)
+		if (key != null && requestedInstance.manager.joyStick != null)
+			if (requestedInstance.manager.joyStick.joyStickPressed(key) == true)
 				return true;
 		return false;
 	}
 	private function joyStickJustPressed(key:String):Bool
 	{
-		if (key != null && requestedInstance.joyStick != null)
-			if (requestedInstance.joyStick.joyStickJustPressed(key) == true)
+		if (key != null && requestedInstance.manager.joyStick != null)
+			if (requestedInstance.manager.joyStick.joyStickJustPressed(key) == true)
 				return true;
 		return false;
 	}
 	private function joyStickJustReleased(key:String):Bool
 	{
-		if (key != null && requestedInstance.joyStick != null)
-			if (requestedInstance.joyStick.joyStickJustReleased(key) == true)
+		if (key != null && requestedInstance.manager.joyStick != null)
+			if (requestedInstance.manager.joyStick.joyStickJustReleased(key) == true)
 				return true;
 		return false;
 	}
 	private function mobilePadPressed(keys:Array<String>):Bool
 	{
-		if (keys != null && requestedInstance.mobilePad != null)
-			if (requestedInstance.mobilePad.buttonPressed(keys) == true)
+		if (keys != null && requestedInstance.manager.mobilePad != null)
+			if (requestedInstance.manager.mobilePad.buttonPressed(keys) == true)
 				return true;
 		return false;
 	}
 	private function mobilePadJustPressed(keys:Array<String>):Bool
 	{
-		if (keys != null && requestedInstance.mobilePad != null)
-			if (requestedInstance.mobilePad.buttonJustPressed(keys) == true)
+		if (keys != null && requestedInstance.manager.mobilePad != null)
+			if (requestedInstance.manager.mobilePad.buttonJustPressed(keys) == true)
 				return true;
 		return false;
 	}
 	private function mobilePadJustReleased(keys:Array<String>):Bool
 	{
-		if (keys != null && requestedInstance.mobilePad != null)
-			if (requestedInstance.mobilePad.buttonJustReleased(keys) == true)
+		if (keys != null && requestedInstance.manager.mobilePad != null)
+			if (requestedInstance.manager.mobilePad.buttonJustReleased(keys) == true)
 				return true;
 
 		return false;

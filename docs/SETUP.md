@@ -23,6 +23,8 @@ Once this is done, go to your Project File, whether that be a build.hxml for Hax
 --library mobile-controls
 # this is optional and can be added if wanted to use File instead of Assets
 -D mobile_controls_file_support
+# this is optional too and can be added if wanted to use mobile controls on PCs
+-D mobile_controls_allow_mouse_clicks
 ```
 
 ### OpenFL / Flixel Project Example
@@ -30,4 +32,5 @@ Once this is done, go to your Project File, whether that be a build.hxml for Hax
 ```xml
 <haxelib name="mobile-controls"/>
 <haxedef name="mobile_controls_file_support"/>
+<haxedef name="mobile_controls_allow_mouse_clicks"/>
 ```

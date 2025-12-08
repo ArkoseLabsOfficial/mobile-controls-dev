@@ -14,7 +14,7 @@ import flixel.FlxCamera;
 import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
 import flixel.FlxG;
-#if BMC_ALLOW_MOUSE_CLICKS
+#if mobile_controls_allow_mouse_clicks
 import flixel.input.mouse.FlxMouseButton;
 #end
 #if (flixel >= "5.3.0")
@@ -108,23 +108,6 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	public var label(default, set):T;
 
 	/**
-	 * What offsets the `label` should have for each status.
-	 */
-	public var labelOffsets:Array<FlxPoint> = [FlxPoint.get(), FlxPoint.get(), FlxPoint.get(0, 1)];
-
-	/**
-	 * What alpha value the label should have for each status. Default is `[0.8, 1.0, 0.5]`.
-	 * Multiplied with the button's `alpha`.
-	 */
-	public var labelAlphas:Array<Float> = [0.8, 1.0, 0.5];
-
-	/**
-	 * What animation should be played for each status.
-	 * Default is ['normal', 'highlight', 'pressed'].
-	 */
-	public var statusAnimations:Array<String> = ['normal', 'highlight', 'pressed'];
-
-	/**
 	 * Whether you can press the button simply by releasing the touch button over it (default).
 	 * If false, the input has to be pressed while hovering over the button.
 	 */
@@ -141,12 +124,6 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	 * Defaults to `Math.POSITIVE_INFINITY` (i.e. no limit).
 	 */
 	public var maxInputMovement:Float = Math.POSITIVE_INFINITY;
-
-	/**
-	 * Shows the current state of the button, either `MobileButton.NORMAL`,
-	 * `MobileButton.HIGHLIGHT` or `MobileButton.PRESSED`.
-	 */
-	public var status(default, set):Int;
 
 	/**
 	 * The properties of this button's `onUp` event (callback function, sound).
@@ -168,10 +145,44 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	 */
 	public var onOut(default, null):MobileButtonEvent;
 
+	/**
+	 * Shows the current state of the button, either `MobileButton.NORMAL`,
+	 * `MobileButton.HIGHLIGHT` or `MobileButton.PRESSED`.
+	 */
+	public var status(default, set):Int;
+
+	/**
+	 * The alpha's the button should use depednging on the status.
+	**/
+	public var statusAlphas:Array<Float> = [1.0, 1.0, 0.6];
+
+	/**
+	 * What animation should be played for each status.
+	 * Default is ['normal', 'highlight', 'pressed'].
+	 */
+	public var statusAnimations:Array<String> = ['normal', 'highlight', 'pressed'];
+
+	/**
+	 * How much to add/substract from the current indicator value for the label.
+	**/
+	public var labelStatusDiff:Float = 0.05;
+
+	/**
+	 * IF YOU'RE USING SPRITE GROUPS YOU MUST SET THIS TO THE GROUP'S ALPHA LIKE IN TouchPad.
+	**/
+	public var parentAlpha(default, set):Float = 1;
+
+	public var statusIndicatorType(default, set):StatusIndicators = ALPHA;
+
 	public var justReleased(get, never):Bool;
 	public var released(get, never):Bool;
 	public var pressed(get, never):Bool;
 	public var justPressed(get, never):Bool;
+
+	/**
+	 * Basically disables the buttok updates.
+	 */
+	public var isJoyStick:Bool;
 
 	/**
 	 * An array of objects that blocks your input.
@@ -199,7 +210,7 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	 */
 	var currentInput:IFlxInput;
 
-	#if BMC_ALLOW_MOUSE_CLICKS
+	#if mobile_controls_allow_mouse_clicks
 	/**
 	* Which mouse buttons can trigger the button - by default only the left mouse button.
 	*/
@@ -232,7 +243,6 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 		scrollFactor.set();
 
 		statusAnimations[MobileButton.HIGHLIGHT] = 'normal';
-		labelAlphas[MobileButton.HIGHLIGHT] = 1;
 
 		input = new FlxInput(0);
 	}
@@ -269,9 +279,6 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 		onDown = FlxDestroyUtil.destroy(onDown);
 		onOver = FlxDestroyUtil.destroy(onOver);
 		onOut = FlxDestroyUtil.destroy(onOut);
-
-		labelOffsets = FlxDestroyUtil.putArray(labelOffsets);
-		labelAlphas = null;
 
 		deadZones = FlxDestroyUtil.destroyArray(deadZones);
 		currentInput = null;
@@ -357,7 +364,7 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	 */
 	function updateButton():Void
 	{
-		#if BMC_ALLOW_MOUSE_CLICKS
+		#if mobile_controls_allow_mouse_clicks
 		var overlapFound = checkMouseOverlap();
 		if (!overlapFound)
 			overlapFound = checkTouchOverlap();
@@ -365,14 +372,16 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 		var overlapFound = checkTouchOverlap();
 		#end
 
-		if (currentInput != null && currentInput.justReleased && overlapFound)
-			onUpHandler();
+		if (!isJoyStick) {
+			if (currentInput != null && currentInput.justReleased && overlapFound)
+				onUpHandler();
 
-		if (status != MobileButton.NORMAL && (!overlapFound || (currentInput != null && currentInput.justReleased)))
-			onOutHandler();
+			if (status != MobileButton.NORMAL && (!overlapFound || (currentInput != null && currentInput.justReleased)))
+				onOutHandler();
+		}
 	}
 
-	#if BMC_ALLOW_MOUSE_CLICKS
+	#if mobile_controls_allow_mouse_clicks
 	function checkMouseOverlap():Bool
 	{
 		var overlap = false;
@@ -465,15 +474,9 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	{
 		if (_spriteLabel != null)
 		{
-			_spriteLabel.x = (pixelPerfectPosition ? Math.floor(x) : x) + labelOffsets[status].x;
-			_spriteLabel.y = (pixelPerfectPosition ? Math.floor(y) : y) + labelOffsets[status].y;
+			_spriteLabel.x = ((width - _spriteLabel.width) / 2) + (pixelPerfectPosition ? Math.floor(x) : x);
+			_spriteLabel.y = ((height - _spriteLabel.height) / 2) + (pixelPerfectPosition ? Math.floor(y) : y);
 		}
-	}
-
-	function updateLabelAlpha()
-	{
-		if (_spriteLabel != null && labelAlphas.length > status)
-			_spriteLabel.alpha = alpha * labelAlphas[status];
 	}
 	
 	public function updateLabelScale()
@@ -482,10 +485,21 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 			_spriteLabel.scale.set(scale.x, scale.y);
 	}
 
+	function indicateStatus()
+	{
+		switch (statusIndicatorType)
+		{
+			case ALPHA:
+				if (_spriteLabel != null && statusAlphas.length > status)
+					_spriteLabel.alpha = alpha * statusAlphas[status];
+			case NONE: // no balls
+		}
+	}
+
 	/**
 	 * Internal function that handles the onUp event.
 	 */
-	function onUpHandler():Void
+	public function onUpHandler():Void
 	{
 		status = MobileButton.NORMAL;
 		input.release();
@@ -496,7 +510,7 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	/**
 	 * Internal function that handles the onDown event.
 	 */
-	function onDownHandler():Void
+	public function onDownHandler():Void
 	{
 		status = MobileButton.PRESSED;
 		input.press();
@@ -506,7 +520,7 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	/**
 	 * Internal function that handles the onOver event.
 	 */
-	function onOverHandler():Void
+	public function onOverHandler():Void
 	{
 		status = MobileButton.HIGHLIGHT;
 		onOver.fire(); // Order matters here, because onOver.fire() could cause a state change and destroy this object.
@@ -515,7 +529,7 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	/**
 	 * Internal function that handles the onOut event.
 	 */
-	function onOutHandler():Void
+	public function onOutHandler():Void
 	{
 		status = MobileButton.NORMAL;
 		input.release();
@@ -542,19 +556,22 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	function set_status(Value:Int):Int
 	{
 		status = Value;
-		updateLabelAlpha();
+		indicateStatus();
 		return status;
 	}
 
 	override function set_alpha(Value:Float):Float
 	{
 		super.set_alpha(Value);
-		updateLabelAlpha();
+		indicateStatus();
 		return alpha;
 	}
 	
 	override function set_visible(Value:Bool):Bool
 	{
+		super.set_visible(Value);
+		if (_spriteLabel != null)
+			_spriteLabel.visible = Value;
 		return Value;
 	}
 
@@ -604,6 +621,24 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 			hintUp.updateHitbox();
 		if (hintDown != null)
 			hintDown.updateHitbox();
+	}
+
+	function set_parentAlpha(Value:Float):Float
+	{
+		statusAlphas = [
+			Value,
+			Value - 0.05,
+			(parentAlpha - 0.45 == 0 && parentAlpha > 0)
+			? 0.25 : parentAlpha - 0.45
+		];
+		indicateStatus();
+		return parentAlpha = Value;
+	}
+
+	function set_statusIndicatorType(Value:StatusIndicators)
+	{
+		statusIndicatorType = Value;
+		return Value;
 	}
 
 	inline function get_justReleased():Bool
@@ -674,4 +709,12 @@ private class MobileButtonEvent implements IFlxDestroyable
 			sound.play(true);
 		#end
 	}
+}
+
+enum StatusIndicators
+{
+	// best one in my opinion
+	ALPHA;
+	// used when u make ur own status indicator like in joystick
+	NONE;
 }

@@ -13,262 +13,121 @@ import flixel.util.FlxDestroyUtil;
 import flixel.graphics.frames.FlxAtlasFrames;
 import openfl.utils.Assets;
 
-/**
- * A virtual thumbstick - useful for input on mobile devices.
- *
- * @author Ka Wing Chin
- * @modification author KralOyuncu2010x (ArkoseLabs) to make handling easier
- */
-class JoyStick extends FlxSpriteGroup
+class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 {
-	/**
-	 * The minimum input threshold required for horizontal movement recognition.
-	 * Values below this threshold will be ignored (dead zone).
-	 */
-	public var deadZone = {x: 0.3, y: 0.3};
-
-	/**
-	 * Shows the current state of the button.
-	 */
-	public var status:Int = NORMAL;
-
-	public var thumb:FlxSprite;
-
-	/**
-	 * The background of the joystick, also known as the base.
-	 */
-	public var base:FlxSprite;
-
-	/**
-	 * This function is called when the button is released.
-	 */
-	public var onUp:Void->Void;
-
-	/**
-	 * This function is called when the button is pressed down.
-	 */
-	public var onDown:Void->Void;
-
-	/**
-	 * This function is called when the touch goes over the button.
-	 */
-	public var onOver:Void->Void;
-
-	/**
-	 * This function is called when the button is hold down.
-	 */
-	public var onPressed:Void->Void;
-
-	/**
-	 * Used with public variable status, means not highlighted or pressed.
-	 */
-	static inline var NORMAL:Int = 0;
-
-	/**
-	 * Used with public variable status, means highlighted (usually from touch over).
-	 */
-	static inline var HIGHLIGHT:Int = 1;
-
-	/**
-	 * Used with public variable status, means pressed (usually from touch click).
-	 */
-	static inline var PRESSED:Int = 2;
-
-	/**
-	 * A list of analogs that are currently active.
-	 */
-	static var analogs:Array<JoyStick> = [];
-
-	/**
-	 * The current pointer that's active on the analog.
-	 */
-	var currentTouch:FlxTouch;
-
-	/**
-	 * Helper array for checking touches
-	 */
-	var tempTouches:Array<FlxTouch> = [];
-
-	/**
-	 * The area which the joystick will react.
-	 */
-	var zone:FlxRect = FlxRect.get();
-
-	/**
-	 * The radius in which the stick can move.
-	 */
+	public var deadZone = {x: 0.3, y: 0.3}; 
+	public var inputAngle:Float = 0;
+	public var intensity:Float = 0;
+	var easeSpeed:Float;
 	var radius:Float = 0;
 
-	/**
-	 * The current direction angle of the joystick in radians.
-	 * Range: -π to π (-3.14 to 3.14)
-	 * 
-	 * Direction reference (may be inaccurate):
-	 * - 0 radians = Right (→)
-	 * - π/2 radians (1.57) = Down (↓) 
-	 * - π radians (3.14) = Left (←)
-	 * - -π/2 radians (-1.57) = Up (↑)
-	 * - π/4 radians (0.79) = Down-Right (↘)
-	 * - 3π/4 radians (2.36) = Down-Left (↙)
-	 * - -3π/4 radians (-2.36) = Up-Left (↖)
-	 * - -π/4 radians (-0.79) = Up-Right (↗)
-	 */
-	public var inputAngle:Float = 0;
+	public var onPressed:Void->Void; 
 
-	/**
-	 * The current intensity/amount of the joystick input.
-	 * Range: 0 to 1, where 0 is no input and 1 is maximum input.
-	 */
-	public var intensity:Float = 0;
+	public var status(get, set):Int; 
+	public var instance:MobileButton;
+	static inline var NORMAL:Int = MobileButton.NORMAL;
+	static inline var HIGHLIGHT:Int = MobileButton.HIGHLIGHT;
+	static inline var PRESSED:Int = MobileButton.PRESSED;
 
-	/**
-	 * The speed of easing when the thumb is released.
-	 */
-	var easeSpeed:Float;
+	static var analogs:Array<JoyStick> = [];
+	var currentTouch:FlxTouch;
+	var tempTouches:Array<FlxTouch> = [];
+	var zone:FlxRect = FlxRect.get();
 
-	/**
-	 * The current size of JoyStick sprites.
-	 */
 	public var size(default, set):Float = 1;
 	function set_size(Value:Float) {
 		size = Value;
-		base.scale.set(Value, Value);
-		thumb.scale.set(Value, Value);
+		instance.scale.set(Value, Value);
+		if (instance.label != null)
+			instance.label.scale.set(Value, Value);
 
-		if (base != null && radius == 0)
-			radius = (base.width * 0.5) * Value;
+		if (instance != null && radius == 0)
+			radius = (instance.width * 0.5) * Value;
 
 		zone.set(x - radius, y - radius, 2 * radius, 2 * radius);
 		return Value;
 	}
 
-	/**
-	 * Create a virtual thumbstick - useful for input on mobile devices.
-	 *
-	 * @param   X			The X-coordinate of the point in space.
-	 * @param   Y			The Y-coordinate of the point in space.
-	 * @param   Radius		The radius where the thumb can move. If 0, half the base's width will be used.
-	 * @param   Ease		Used to smoothly back thumb to center. Must be between 0 and (FlxG.updateFrameRate / 60).
-	 * @param   Size			The Scale of the point in space.
-	 */
 	public function new(X:Float = 0, Y:Float = 0, Radius:Float = 0, Ease:Float = 0.25, Size:Float = 1)
 	{
 		super(X, Y);
-
 		radius = Radius;
 		easeSpeed = FlxMath.bound(Ease, 0, 60 / FlxG.updateFramerate);
-
 		analogs.push(this);
-
 		_point = FlxPoint.get();
-
-		createBase();
-		createThumb();
+		createInstance(); 
 		createZone();
 		size = Size;
-
 		scrollFactor.set();
 		moves = false;
 	}
 
-	/**
-	 * Creates the background of the analog stick.
-	 */
-	function createBase():Void
+	function createInstance():Void
 	{
-		base = new FlxSprite(0, 0);
-
+		instance = new MobileButton(0, 0);
+		instance.isJoyStick = true;
+		instance.statusIndicatorType = NONE;
 		var xmlFile:String = MobileConfig.mobileFolderPath + 'JoyStick/joystick.xml';
 		var pngFile:String = MobileConfig.mobileFolderPath + 'JoyStick/joystick.png';
-		#if BSM_FILE_SUPPORT
+
+		#if mobile_controls_file_support
 		var xmlAndPngExists:Bool = false;
 		if(FileSystem.exists(xmlFile) && FileSystem.exists(pngFile)) xmlAndPngExists = true;
 
 		if (xmlAndPngExists)
-			base.loadGraphic(FlxGraphic.fromFrame(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('base'));
+			instance.loadGraphic(FlxGraphic.fromFrame(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('base'));
 		else #end
-			base.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData(pngFile), Assets.getText(xmlFile)).getByName('base')));
+			instance.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData(pngFile), Assets.getText(xmlFile)).getByName('base')));
 
-		base.resetSizeFromFrame();
-		base.x += -base.width * 0.5;
-		base.y += -base.height * 0.5;
-		base.scrollFactor.set();
-		base.solid = false;
-		#if FLX_DEBUG
-		base.ignoreDrawDebug = true;
-		#end
-		add(base);
-	}
+		instance.resetSizeFromFrame();
+		instance.x += -instance.width * 0.5;
+		instance.y += -instance.height * 0.5;
+        instance.scrollFactor.set();
+        instance.solid = false;
+		
+		instance.label = new FlxSprite(0, 0);
 
-	/**
-	 * Creates the thumb of the analog stick.
-	 */
-	function createThumb():Void
-	{
-		thumb = new FlxSprite(0,0);
-
-		var xmlFile:String = MobileConfig.mobileFolderPath + 'JoyStick/joystick.xml';
-		var pngFile:String = MobileConfig.mobileFolderPath + 'JoyStick/joystick.png';
-		#if BSM_FILE_SUPPORT
-		var xmlAndPngExists:Bool = false;
-		if(FileSystem.exists(xmlFile) && FileSystem.exists(pngFile)) xmlAndPngExists = true;
-
+		#if mobile_controls_file_support
 		if (xmlAndPngExists)
-			thumb.loadGraphic(FlxGraphic.fromFrame(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('thumb'));
+			instance.label.loadGraphic(FlxGraphic.fromFrame(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('thumb'));
 		else #end
-			thumb.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData(pngFile), Assets.getText(xmlFile)).getByName('thumb')));
+			instance.label.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData(pngFile), Assets.getText(xmlFile)).getByName('thumb')));
 
-		thumb.resetSizeFromFrame();
-		thumb.x += -thumb.width * 0.5;
-		thumb.y += -thumb.height * 0.5;
-		thumb.scrollFactor.set();
-		thumb.solid = false;
-		#if FLX_DEBUG
-		thumb.ignoreDrawDebug = true;
-		#end
-		add(thumb);
+		instance.label.resetSizeFromFrame();
+		instance.label.x += -instance.label.width * 0.5; 
+		instance.label.y += -instance.label.height * 0.5;
+		instance.label.scrollFactor.set();
+        instance.label.solid = false;
+		
+		add(instance);
+
+		if (radius == 0)
+			radius = instance.width * 0.5;
 	}
 
-	/**
-	 * Creates the touch zone. It's based on the size of the background.
-	 * The thumb will react when the touch is in the zone.
-	 */
 	public function createZone():Void
 	{
-		if (base != null && radius == 0)
-			radius = base.width * 0.5;
+		if (instance != null && radius == 0)
+			radius = instance.width * 0.5;
 
 		zone.set(x - radius, y - radius, 2 * radius, 2 * radius);
 	}
 
-	/**
-	 * Clean up memory.
-	 */
 	override public function destroy():Void
 	{
 		super.destroy();
-
 		zone = FlxDestroyUtil.put(zone);
-
 		analogs.remove(this);
-		onUp = null;
-		onDown = null;
-		onOver = null;
-		onPressed = null;
-		thumb = null;
-		base = null;
-
+		instance = FlxDestroyUtil.destroy(instance);
 		currentTouch = null;
 		tempTouches = null;
+		onPressed = null; 
 	}
 
-	/**
-	 * Update the behavior.
-	 */
 	override public function update(elapsed:Float):Void
 	{
 		var offAll:Bool = true;
-
+		
 		// There is no reason to get into the loop if their is already a pointer on the analog
 		if (currentTouch != null)
 		{
@@ -315,8 +174,8 @@ class JoyStick extends FlxSpriteGroup
 			}
 		}
 
-		thumb.x = x + Math.cos(inputAngle) * intensity * radius - (thumb.width * 0.5);
-		thumb.y = y + Math.sin(inputAngle) * intensity * radius - (thumb.height * 0.5);
+		instance.label.x = x + Math.cos(inputAngle) * intensity * radius - (instance.label.width * 0.5); 
+		instance.label.y = y + Math.sin(inputAngle) * intensity * radius - (instance.label.height * 0.5); 
 
 		if (offAll)
 			status = NORMAL;
@@ -330,9 +189,11 @@ class JoyStick extends FlxSpriteGroup
 	{
 		var offAll:Bool = true;
 
-		if (zone.containsPoint(TouchPoint) || (status == PRESSED))
+		if (zone.containsPoint(TouchPoint) || status == PRESSED)
 		{
 			offAll = false;
+
+			if (status == PRESSED) instance.onDownHandler();
 
 			if (Pressed)
 			{
@@ -341,13 +202,12 @@ class JoyStick extends FlxSpriteGroup
 
 				status = PRESSED;
 
-				if (JustPressed && onDown != null)
-					onDown();
+				if (JustPressed) instance.onDown.fire(); 
 
 				if (status == PRESSED)
 				{
 					if (onPressed != null)
-						onPressed();
+						onPressed(); 
 
 					var dx:Float = TouchPoint.x - x;
 					var dy:Float = TouchPoint.y - y;
@@ -367,68 +227,49 @@ class JoyStick extends FlxSpriteGroup
 			else if (JustReleased && status == PRESSED)
 			{
 				currentTouch = null;
-
 				status = HIGHLIGHT;
 
-				if (onUp != null)
-					onUp();
-
+				instance.onUp.fire();
 				acceleration.set();
 			}
 
 			if (status == NORMAL)
 			{
 				status = HIGHLIGHT;
-
-				if (onOver != null)
-					onOver();
 			}
 		}
 
 		return offAll;
 	}
 
-	/**
-	 * Whether the thumb is pressed or not.
-	 */
-	public var pressed(get, never):Bool;
-
 	inline function get_pressed():Bool
-	{
+	{ 
 		return status == PRESSED;
 	}
-
-	/**
-	 * Whether the thumb is just pressed or not.
-	 */
-	public var justPressed(get, never):Bool;
-
-	function get_justPressed():Bool
+	inline function get_justPressed():Bool 
 	{
 		if (currentTouch != null)
 			return currentTouch.justPressed && status == PRESSED;
-
 		return false;
 	}
-
-	/**
-	 * Whether the thumb is just released or not.
-	 */
-	public var justReleased(get, never):Bool;
-
-	function get_justReleased():Bool
+	inline function get_justReleased():Bool
 	{
 		if (currentTouch != null)
 			return currentTouch.justReleased && status == HIGHLIGHT;
-
 		return false;
 	}
+	
+	public var pressed(get, never):Bool;
+	public var justPressed(get, never):Bool;
+	public var justReleased(get, never):Bool;
+	
+	function get_status():Int { return instance.status; }
+	function set_status(Value:Int):Int { return instance.status = Value; }
 
 	override public function set_x(X:Float):Float
 	{
 		super.set_x(X);
 		createZone();
-
 		return X;
 	}
 
@@ -436,129 +277,73 @@ class JoyStick extends FlxSpriteGroup
 	{
 		super.set_y(Y);
 		createZone();
-
 		return Y;
 	}
 
-	/**
-	 * Whether the joystick is pointing up.
-	 */
 	public var up(get, never):Bool;
-	
 	function get_up():Bool
 	{
 		if (!pressed) return false;
-		return intensity > deadZone.y && (Math.sin(inputAngle) < -deadZone.y);
+		return intensity > deadZone.y && (Math.sin(inputAngle) < -deadZone.y); 
 	}
 	
-	/**
-	 * Whether the joystick is pointing down.
-	 */
 	public var down(get, never):Bool;
-	
 	function get_down():Bool
 	{
 		if (!pressed) return false;
 		return Math.sin(inputAngle) > deadZone.y;
 	}
 	
-	/**
-	 * Whether the joystick is pointing left.
-	 */
 	public var left(get, never):Bool;
-	
 	function get_left():Bool
 	{
 		if (!pressed) return false;
 		return Math.cos(inputAngle) < -deadZone.x;
 	}
 	
-	/**
-	 * Whether the joystick is pointing right.
-	 */
 	public var right(get, never):Bool;
-	
 	function get_right():Bool
 	{
 		if (!pressed) return false;
 		return Math.cos(inputAngle) > deadZone.x;
 	}
 
-	/**
-	 * Check if a specific direction was just pressed.
-	 * @param Direction The direction to check ('up', 'down', 'left', 'right')
-	 * @param Threshold Minimum amount required (0-1). Default is 0.5.
-	 * @return Bool
-	 */
 	public function joyStickJustPressed(Direction:String, Threshold:Float = 0.5):Bool
 	{
 		if (!justPressed) return false;
-		
 		switch (Direction.toLowerCase())
 		{
-			case 'up':
-				return up;
-			case 'down':
-				return down;
-			case 'left':
-				return left;
-			case 'right':
-				return right;
-			default:
-				//trace('Invalid direction: ' + Direction + '. Use: up, down, left, right');
-				return false;
+			case 'up': return up;
+			case 'down': return down;
+			case 'left': return left;
+			case 'right': return right;
+			default: return false;
 		}
 	}
 	
-	/**
-	 * Check if a specific direction is currently held.
-	 * @param Direction The direction to check ('up', 'down', 'left', 'right')
-	 * @param Threshold Minimum amount required (0-1). Default is 0.5.
-	 * @return Bool
-	 */
 	public function joyStickPressed(Direction:String, Threshold:Float = 0.5):Bool
 	{
 		if (!pressed) return false;
-
 		switch (Direction.toLowerCase())
 		{
-			case 'up':
-				return up;
-			case 'down':
-				return down;
-			case 'left':
-				return left;
-			case 'right':
-				return right;
-			default:
-				//trace('Invalid direction: ' + Direction + '. Use: up, down, left, right');
-				return false;
+			case 'up': return up;
+			case 'down': return down;
+			case 'left': return left;
+			case 'right': return right;
+			default: return false;
 		}
 	}
 	
-	/**
-	 * Check if a specific direction was just released.
-	 * @param Direction The direction to check ('up', 'down', 'left', 'right')
-	 * @param Threshold Minimum amount required (0-1). Default is 0.5.
-	 * @return Bool
-	 */
 	public function joyStickJustReleased(Direction:String, Threshold:Float = 0.5):Bool
 	{
 		if (!justReleased) return false;
-
 		switch (Direction.toLowerCase())
 		{
-			case 'up':
-				return up;
-			case 'down':
-				return down;
-			case 'left':
-				return left;
-			case 'right':
-				return right;
-			default:
-				//trace('Invalid direction: ' + Direction + '. Use: up, down, left, right');
-				return false;
+			case 'up': return up;
+			case 'down': return down;
+			case 'left': return left;
+			case 'right': return right;
+			default: return false;
 		}
 	}
 }
