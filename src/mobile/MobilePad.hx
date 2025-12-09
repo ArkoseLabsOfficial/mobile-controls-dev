@@ -53,13 +53,12 @@ class MobilePad extends MobileInputHandler {
 					if (buttonData.scale == null) buttonData.scale = 1.0;
 					var buttonName:String = buttonData.button;
 					var buttonIDs:Array<String> = buttonData.buttonIDs;
-					var buttonUniqueID:Int = buttonData.buttonUniqueID;
+					var buttonUniqueID:Int = (buttonData.buttonUniqueID != null ? buttonData.buttonUniqueID : -1);
 					var buttonGraphic:String = buttonData.graphic;
 					var buttonScale:Float = buttonData.scale;
 					var buttonColor = buttonData.color;
 					var buttonX:Float = buttonData.x;
 					var buttonY:Float = buttonData.y;
-					if (buttonData.buttonUniqueID == null) buttonUniqueID = -1; // -1 means not setted.
 
 					addButton(buttonName, buttonIDs, buttonUniqueID, buttonX, buttonY, buttonGraphic, buttonScale, Util.colorFromString(buttonColor), 'DPad');
 				}
@@ -75,13 +74,12 @@ class MobilePad extends MobileInputHandler {
 					if (buttonData.scale == null) buttonData.scale = 1.0;
 					var buttonName:String = buttonData.button;
 					var buttonIDs:Array<String> = buttonData.buttonIDs;
-					var buttonUniqueID:Int = buttonData.buttonUniqueID;
+					var buttonUniqueID:Int = (buttonData.buttonUniqueID != null ? buttonData.buttonUniqueID : -1);
 					var buttonGraphic:String = buttonData.graphic;
 					var buttonColor = buttonData.color;
 					var buttonScale:Float = buttonData.scale;
 					var buttonX:Float = buttonData.x;
 					var buttonY:Float = buttonData.y;
-					if (buttonData.buttonUniqueID == null) buttonUniqueID = -1; // -1 means not setted.
 
 					addButton(buttonName, buttonIDs, buttonUniqueID, buttonX, buttonY, buttonGraphic, buttonScale, Util.colorFromString(buttonColor), 'Action');
 				}
@@ -101,10 +99,10 @@ class MobilePad extends MobileInputHandler {
 		var button:MobileButton = new MobileButton(0, 0);
 		button = createVirtualButton(X, Y, Graphic, Scale, Color);
 		button.name = name;
-		button.uniqueID = UniqueID;
+		button.uniqueID = uniqueID;
 		button.IDs = IDs;
-		button.onDown.callback = () -> onButtonDown.dispatch(button, IDs, UniqueID);
-		button.onOut.callback = button.onUp.callback = () -> onButtonUp.dispatch(button, IDs, UniqueID);
+		button.onDown.callback = () -> onButtonDown.dispatch(button, IDs, uniqueID);
+		button.onOut.callback = button.onUp.callback = () -> onButtonUp.dispatch(button, IDs, uniqueID);
 
 		actions.push(button);
 		add(button);
