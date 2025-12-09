@@ -56,10 +56,11 @@ class ScreenUtil
 class WideScreenMode extends BaseScaleMode
 {
 	public var enabled(default, set):Bool = false;
+	public static var _enabled:Bool = false;
 
 	override function updateGameSize(Width:Int, Height:Int):Void
 	{
-		if(enabled)
+		if(_enabled)
 		{
 			super.updateGameSize(Width, Height);
 		}
@@ -85,7 +86,7 @@ class WideScreenMode extends BaseScaleMode
 
 	override function updateGamePosition():Void
 	{
-		if(enabled)
+		if(_enabled)
 			FlxG.game.x = FlxG.game.y = 0;
 		else
 			super.updateGamePosition();
@@ -95,6 +96,7 @@ class WideScreenMode extends BaseScaleMode
 	private function set_enabled(value:Bool):Bool
 	{
 		enabled = value;
+		_enabled = value;
 		FlxG.scaleMode = new WideScreenMode();
 		return value;
 	}
