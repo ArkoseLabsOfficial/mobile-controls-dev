@@ -109,10 +109,10 @@ class MobilePad extends MobileInputHandler {
 		buttonFromName.set(name, button);
 		switch (indexType.toUpperCase()) {
 			case 'DPAD':
-				buttonIndexFromName.set(buttonName, countedDPadIndex);
+				buttonIndexFromName.set(name, countedDPadIndex);
 				countedDPadIndex++;
 			case 'ACTION':
-				buttonIndexFromName.set(buttonName, countedActionIndex);
+				buttonIndexFromName.set(name, countedActionIndex);
 				countedActionIndex++;
 		}
 	}
