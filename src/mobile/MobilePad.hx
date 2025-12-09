@@ -19,8 +19,8 @@ class MobilePad extends MobileInputHandler {
 	public var onButtonDown:FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void> = new FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void>();
 	public var onButtonUp:FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void> = new FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void>();
 	public var instance:MobileInputHandler;
-	public var DPads:Array<MobileButton> = [];
-	public var Actions:Array<MobileButton> = [];
+	public var dpads:Array<MobileButton> = [];
+	public var actions:Array<MobileButton> = [];
 	public var buttonIndexFromName:Map<String, Int> = [];
 	public var buttonFromName:Map<String, MobileButton> = [];
 
@@ -97,18 +97,18 @@ class MobilePad extends MobileInputHandler {
 
 	public var countedDPadIndex:Int = 0;
 	public var countedActionIndex:Int = 0;
-	public function addButton(buttonName:String, buttonIDs:Array<String>, ?buttonUniqueID:Int = -1, buttonX:Float, buttonY:Float, buttonGraphic:String, ?buttonScale:Float = 1.0, ?buttonColor:Int = 0xFFFFFF, indexType:String = 'DPad') {
+	public function addButton(name:String, IDs:Array<String>, ?uniqueID:Int = -1, X:Float, Y:Float, Graphic:String, ?Scale:Float = 1.0, ?Color:Int = 0xFFFFFF, indexType:String = 'DPad') {
 		var button:MobileButton = new MobileButton(0, 0);
-		button = createVirtualButton(buttonX, buttonY, buttonGraphic, buttonScale, buttonColor);
-		button.name = buttonName;
-		button.uniqueID = buttonUniqueID;
-		button.IDs = buttonIDs;
-		button.onDown.callback = () -> onButtonDown.dispatch(button, buttonIDs, buttonUniqueID);
-		button.onOut.callback = button.onUp.callback = () -> onButtonUp.dispatch(button, buttonIDs, buttonUniqueID);
+		button = createVirtualButton(X, Y, Graphic, Scale, Color);
+		button.name = name;
+		button.uniqueID = UniqueID;
+		button.IDs = IDs;
+		button.onDown.callback = () -> onButtonDown.dispatch(button, IDs, UniqueID);
+		button.onOut.callback = button.onUp.callback = () -> onButtonUp.dispatch(button, IDs, UniqueID);
 
-		Actions.push(button);
+		actions.push(button);
 		add(button);
-		buttonFromName.set(buttonName, button);
+		buttonFromName.set(name, button);
 		switch (indexType.toUpperCase()) {
 			case 'DPAD':
 				buttonIndexFromName.set(buttonName, countedDPadIndex);
@@ -156,8 +156,8 @@ class MobilePad extends MobileInputHandler {
 		onButtonUp.destroy();
 		onButtonDown.destroy();
 
-		DPads = [];
-		Actions = [];
+		dpads = [];
+		actions = [];
 		buttonIndexFromName = [];
 		buttonFromName = [];
 	}

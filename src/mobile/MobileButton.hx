@@ -82,10 +82,10 @@ class MobileButton extends TypedMobileButton<FlxSprite>
 	 * @param   Y		 The y position of the button.
 	 * @param   Return	 The return of the button.
 	 */
-	public function new(X:Float = 0, Y:Float = 0, ?Return:String):Void
+	public function new(X:Float = 0, Y:Float = 0, ?returned:String):Void
 	{
 		super(X, Y);
-		if (Return != null || Return != '') returnedKey = Return;
+		if (returned != null || returned != '') returnedKey = returned;
 	}
 
 	public inline function centerInBounds()
