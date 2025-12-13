@@ -5,6 +5,7 @@ import haxe.io.Path;
 import flixel.util.FlxSave;
 import openfl.utils.Assets;
 #if sys
+import sys.io.File;
 import sys.FileSystem;
 #end
 
