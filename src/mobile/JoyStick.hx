@@ -14,6 +14,7 @@ import flixel.graphics.frames.FlxAtlasFrames;
 import openfl.utils.Assets;
 import openfl.display.BitmapData;
 #if sys
+import sys.io.File;
 import sys.FileSystem;
 #end
 
@@ -79,7 +80,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		if(FileSystem.exists(xmlFile) && FileSystem.exists(pngFile)) xmlAndPngExists = true;
 
 		if (xmlAndPngExists)
-			instance.loadGraphic(FlxGraphic.fromFrame(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('base'));
+			instance.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('base')));
 		else #end
 			instance.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData(pngFile), Assets.getText(xmlFile)).getByName('base')));
 
@@ -93,7 +94,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 
 		#if mobile_controls_file_support
 		if (xmlAndPngExists)
-			instance.label.loadGraphic(FlxGraphic.fromFrame(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('thumb'));
+			instance.label.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('thumb')));
 		else #end
 			instance.label.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData(pngFile), Assets.getText(xmlFile)).getByName('thumb')));
 
