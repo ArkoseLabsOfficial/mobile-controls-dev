@@ -12,6 +12,10 @@ import flixel.graphics.FlxGraphic;
 import flixel.util.FlxDestroyUtil;
 import flixel.graphics.frames.FlxAtlasFrames;
 import openfl.utils.Assets;
+import openfl.display.BitmapData;
+#if sys
+import sys.FileSystem;
+#end
 
 class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 {

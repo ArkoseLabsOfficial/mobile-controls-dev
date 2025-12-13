@@ -4,6 +4,9 @@ import haxe.Json;
 import haxe.io.Path;
 import flixel.util.FlxSave;
 import openfl.utils.Assets;
+#if sys
+import sys.FileSystem;
+#end
 
 using StringTools;
 
