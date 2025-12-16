@@ -89,7 +89,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		instance.y += -instance.height * 0.5;
         instance.scrollFactor.set();
         instance.solid = false;
-		
+
 		instance.label = new FlxSprite(0, 0);
 
 		#if mobile_controls_file_support
@@ -103,7 +103,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		instance.label.y += -instance.label.height * 0.5;
 		instance.label.scrollFactor.set();
         instance.label.solid = false;
-		
+
 		add(instance);
 
 		if (radius == 0)
@@ -132,7 +132,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 	override public function update(elapsed:Float):Void
 	{
 		var offAll:Bool = true;
-		
+
 		// There is no reason to get into the loop if their is already a pointer on the analog
 		if (currentTouch != null)
 		{
@@ -146,8 +146,6 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 
 				for (analog in analogs)
 				{
-					// Check whether the pointer is already taken by another analog.
-					// TODO: check this place. This line was 'if (analog != this && analog.currentTouch != touch && touchInserted == false)'
 					if (analog == this && analog.currentTouch != touch && !touchInserted)
 					{
 						tempTouches.push(touch);
@@ -160,8 +158,9 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		for (touch in tempTouches)
 		{
 			_point.set(touch.screenX, touch.screenY);
+			final worldPos:FlxPoint = touch.getWorldPosition(camera, _point);
 
-			if (!updateAnalog(_point, touch.pressed, touch.justPressed, touch.justReleased, touch))
+			if (!updateAnalog(worldPos, touch.pressed, touch.justPressed, touch.justReleased, touch))
 			{
 				offAll = false;
 				break;
@@ -179,8 +178,8 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 			}
 		}
 
-		instance.label.x = x + Math.cos(inputAngle) * intensity * radius - (instance.label.width * 0.5); 
-		instance.label.y = y + Math.sin(inputAngle) * intensity * radius - (instance.label.height * 0.5); 
+		instance.label.x = (x + Math.cos(inputAngle) * intensity * radius - (instance.label.width * 0.5));
+		instance.label.y = (y + Math.sin(inputAngle) * intensity * radius - (instance.label.height * 0.5));
 
 		if (offAll)
 			status = NORMAL;
@@ -263,11 +262,11 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 			return currentTouch.justReleased && status == HIGHLIGHT;
 		return false;
 	}
-	
+
 	public var pressed(get, never):Bool;
 	public var justPressed(get, never):Bool;
 	public var justReleased(get, never):Bool;
-	
+
 	function get_status():Int { return instance.status; }
 	function set_status(Value:Int):Int { return instance.status = Value; }
 
@@ -291,21 +290,21 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		if (!pressed) return false;
 		return intensity > deadZone.y && (Math.sin(inputAngle) < -deadZone.y); 
 	}
-	
+
 	public var down(get, never):Bool;
 	function get_down():Bool
 	{
 		if (!pressed) return false;
 		return Math.sin(inputAngle) > deadZone.y;
 	}
-	
+
 	public var left(get, never):Bool;
 	function get_left():Bool
 	{
 		if (!pressed) return false;
 		return Math.cos(inputAngle) < -deadZone.x;
 	}
-	
+
 	public var right(get, never):Bool;
 	function get_right():Bool
 	{
@@ -325,7 +324,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 			default: return false;
 		}
 	}
-	
+
 	public function joyStickPressed(Direction:String, Threshold:Float = 0.5):Bool
 	{
 		if (!pressed) return false;
@@ -338,7 +337,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 			default: return false;
 		}
 	}
-	
+
 	public function joyStickJustReleased(Direction:String, Threshold:Float = 0.5):Bool
 	{
 		if (!justReleased) return false;
