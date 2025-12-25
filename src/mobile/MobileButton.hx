@@ -390,27 +390,27 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	function checkMouseOverlap():Bool
 	{
 		var overlap = false;
-		#if FLX_MOUSE
 		for (camera in cameras)
 		{
 			for (buttonID in mouseButtons)
 			{
 				var button = FlxMouseButton.getByID(buttonID);
 
-				final worldPos:FlxPoint = button.getWorldPosition(camera, _point);
+				final worldPos:FlxPoint = FlxG.mouse.getWorldPosition(camera, _point);
 
 				for (zone in deadZones) {
 					if (zone != null) {
-						if (zone.overlapsPoint(worldPos, true, camera))
-							return false;
+						try {
+							if (zone.overlapsPoint(worldPos, true, camera))
+								return false;
+						} catch(e:Dynamic) {}
 					}
 				}
 
-				if (button != null && checkInput(FlxG.mouse, button, button.justPressedPosition, camera))
+				if (checkInput(FlxG.mouse, button, button.justPressedPosition, camera))
 					overlap = true;
 			}
 		}
-		#end
 		return overlap;
 	}
 	#end
@@ -418,15 +418,16 @@ class TypedMobileButton<T:FlxSprite> extends FlxSprite implements IFlxInput
 	function checkTouchOverlap():Bool
 	{
 		var overlap = false;
-
 		for (camera in cameras) {
 			for (touch in FlxG.touches.list) {
 				final worldPos:FlxPoint = touch.getWorldPosition(camera, _point);
 
 				for (zone in deadZones) {
 					if (zone != null) {
-						if (zone.overlapsPoint(worldPos, true, camera))
-							return false;
+						try {
+							if (zone.overlapsPoint(worldPos, true, camera))
+								return false;
+						} catch(e:Dynamic) {}
 					}
 				}
 

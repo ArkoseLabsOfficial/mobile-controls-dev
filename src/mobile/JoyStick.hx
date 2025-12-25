@@ -53,7 +53,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		return Value;
 	}
 
-	public function new(X:Float = 0, Y:Float = 0, Radius:Float = 0, Ease:Float = 0.25, Size:Float = 1)
+	public function new(?stickPath:String, X:Float = 0, Y:Float = 0, Radius:Float = 0, Ease:Float = 0.25, Size:Float = 1)
 	{
 		super(X, Y);
 		radius = Radius;
@@ -67,13 +67,15 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		moves = false;
 	}
 
-	function createInstance():Void
+	function createInstance(?stickPath:String):Void
 	{
+		if (stickPath == null) stickPath = MobileConfig.mobileFolderPath + 'JoyStick/joystick';
+		var xmlFile:String = '${stickPath}.xml';
+		var pngFile:String = '${stickPath}.png';
+
 		instance = new MobileButton(0, 0);
 		instance.isJoyStick = true;
 		instance.statusIndicatorType = NONE;
-		var xmlFile:String = MobileConfig.mobileFolderPath + 'JoyStick/joystick.xml';
-		var pngFile:String = MobileConfig.mobileFolderPath + 'JoyStick/joystick.png';
 
 		#if mobile_controls_file_support
 		var xmlAndPngExists:Bool = false;
@@ -87,8 +89,8 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		instance.resetSizeFromFrame();
 		instance.x += -instance.width * 0.5;
 		instance.y += -instance.height * 0.5;
-        instance.scrollFactor.set();
-        instance.solid = false;
+		instance.scrollFactor.set();
+		instance.solid = false;
 
 		instance.label = new FlxSprite(0, 0);
 
@@ -102,7 +104,7 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		instance.label.x += -instance.label.width * 0.5; 
 		instance.label.y += -instance.label.height * 0.5;
 		instance.label.scrollFactor.set();
-        instance.label.solid = false;
+		instance.label.solid = false;
 
 		add(instance);
 
