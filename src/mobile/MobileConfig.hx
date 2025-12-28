@@ -122,7 +122,7 @@ typedef HitboxData =
 	width:Dynamic, // the button's Width on screen.
 	height:Dynamic, // the button's Height on screen.
 	color:String, // the button color, default color is white.
-	returnKey:String, // the button return, default return is nothing but If you're game using a lua scripting this will be useful.
+	returnKey:String // the button return, default return is nothing but If you're game using a lua scripting this will be useful.
 }
 
 typedef ButtonsData =
@@ -134,5 +134,6 @@ typedef ButtonsData =
 	x:Float, // the button's X position on screen.
 	y:Float, // the button's Y position on screen.
 	color:String, // the button color, default color is white.
-	scale:Null<Float> //the button scale, default scale is 1.
+	scale:Null<Float>, //the button scale, default scale is 1.
+	returnKey:String // the button return, default return is nothing but If you're game using a lua scripting this will be useful.
 }

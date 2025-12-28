@@ -248,29 +248,8 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 		return offAll;
 	}
 
-	inline function get_pressed():Bool
-	{ 
-		return status == PRESSED;
-	}
-	inline function get_justPressed():Bool 
-	{
-		if (currentTouch != null)
-			return currentTouch.justPressed && status == PRESSED;
-		return false;
-	}
-	inline function get_justReleased():Bool
-	{
-		if (currentTouch != null)
-			return currentTouch.justReleased && status == HIGHLIGHT;
-		return false;
-	}
-
-	public var pressed(get, never):Bool;
-	public var justPressed(get, never):Bool;
-	public var justReleased(get, never):Bool;
-
-	function get_status():Int { return instance.status; }
-	function set_status(Value:Int):Int { return instance.status = Value; }
+	function get_status():Int return instance.status;
+	function set_status(Value:Int):Int return instance.status = Value;
 
 	override public function set_x(X:Float):Float
 	{
@@ -289,67 +268,71 @@ class JoyStick extends FlxTypedSpriteGroup<MobileButton>
 	public var up(get, never):Bool;
 	function get_up():Bool
 	{
-		if (!pressed) return false;
+		if (status != PRESSED) return false;
 		return intensity > deadZone.y && (Math.sin(inputAngle) < -deadZone.y); 
 	}
 
 	public var down(get, never):Bool;
 	function get_down():Bool
 	{
-		if (!pressed) return false;
+		if (status != PRESSED) return false;
 		return Math.sin(inputAngle) > deadZone.y;
 	}
 
 	public var left(get, never):Bool;
 	function get_left():Bool
 	{
-		if (!pressed) return false;
+		if (status != PRESSED) return false;
 		return Math.cos(inputAngle) < -deadZone.x;
 	}
 
 	public var right(get, never):Bool;
 	function get_right():Bool
 	{
-		if (!pressed) return false;
+		if (status != PRESSED) return false;
 		return Math.cos(inputAngle) > deadZone.x;
 	}
 
-	public function joyStickJustPressed(Direction:String, Threshold:Float = 0.5):Bool
-	{
-		if (!justPressed) return false;
-		switch (Direction.toLowerCase())
+	public function justReleased(Direction:String, Threshold:Float = 0.5):Bool {
+		if (currentTouch != null && currentTouch.justReleased && status == HIGHLIGHT)
 		{
-			case 'up': return up;
-			case 'down': return down;
-			case 'left': return left;
-			case 'right': return right;
-			default: return false;
-		}
+			switch (Direction.toLowerCase())
+			{
+				case 'up': return up;
+				case 'down': return down;
+				case 'left': return left;
+				case 'right': return right;
+				default: return false;
+			}
+		} else
+			return false;
+	}
+	public function justPressed(Direction:String, Threshold:Float = 0.5):Bool {
+		if (currentTouch != null && currentTouch.justPressed && status == PRESSED)
+		{
+			switch (Direction.toLowerCase())
+			{
+				case 'up': return up;
+				case 'down': return down;
+				case 'left': return left;
+				case 'right': return right;
+				default: return false;
+			}
+		} else
+			return false;
 	}
 
-	public function joyStickPressed(Direction:String, Threshold:Float = 0.5):Bool
-	{
-		if (!pressed) return false;
-		switch (Direction.toLowerCase())
-		{
-			case 'up': return up;
-			case 'down': return down;
-			case 'left': return left;
-			case 'right': return right;
-			default: return false;
-		}
-	}
-
-	public function joyStickJustReleased(Direction:String, Threshold:Float = 0.5):Bool
-	{
-		if (!justReleased) return false;
-		switch (Direction.toLowerCase())
-		{
-			case 'up': return up;
-			case 'down': return down;
-			case 'left': return left;
-			case 'right': return right;
-			default: return false;
-		}
+	public function pressed(Direction:String, Threshold:Float = 0.5):Bool {
+		if (status == PRESSED) {
+			switch (Direction.toLowerCase())
+			{
+				case 'up': return up;
+				case 'down': return down;
+				case 'left': return left;
+				case 'right': return right;
+				default: return false;
+			}
+		} else
+			return false;
 	}
 }

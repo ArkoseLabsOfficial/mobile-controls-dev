@@ -19,35 +19,36 @@ class Hitbox extends MobileInputHandler
 	public var onButtonDown:FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void> = new FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void>();
 	public var onButtonUp:FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void> = new FlxTypedSignal<(MobileButton, Array<String>, Int) -> Void>();
 	public var instance:MobileInputHandler;
+	public var hintMap:Map<String, MobileButton> = [];
 	public var hints:Array<MobileButton> = [];
-	public var buttonIndexFromName:Map<String, Int> = [];
-	public var buttonFromName:Map<String, MobileButton> = [];
 	public var globalAlpha:Float = 0.7;
 
-	public function getButtonIndexFromName(btnName:String)
-		return buttonIndexFromName.get(btnName);
+	public function getButton(name:String):MobileButton
+		return hintMap.get(name);
 
-	public function getButtonFromName(btnName:String)
-		return buttonFromName.get(btnName);
+	public function getIndex(name:String):Int {
+		var btn = hintMap.get(name);
+		if (btn == null) return -1;
+		return hints.indexOf(btn);
+	}
 
 	/**
 	 * Create the zone.
 	 *
 	 * @param   Mode   The Hitbox mode. `Test` for example.
 	 * @param   GlobalAlpha   The alpha of hints. `0.7` for example.
-	 * @param   DisableCreation   The hint creation.
+	 * @param   hintCreation   The hint creation.
 	 */
-	 
-	public function new(?Mode:String, ?globalAlpha:Float = 0.7, ?disableCreation:Bool = false):Void
+	public function new(Mode:String = "NONE", globalAlpha:Float = 0.7, hintCreation:Bool = true):Void
 	{
 		instance = this;
 		super();
 		this.globalAlpha = globalAlpha;
 
-		if (!disableCreation && Mode != null)
+		if (hintCreation && Mode != "NONE")
 		{
 			if (!MobileConfig.hitboxModes.exists(Mode))
-				throw 'The HitboxMode "$Mode" doesn\'t exists.';
+				throw 'The hitbox hitboxMode "$Mode" doesn\'t exists.';
 
 			for (buttonData in MobileConfig.hitboxModes.get(Mode).hints)
 			{
@@ -69,19 +70,15 @@ class Hitbox extends MobileInputHandler
 
 		scrollFactor.set();
 		updateTrackedButtons();
-
 		instance = this;
 	}
 
-	var countedIndex:Int = 0;
 	public function addHint(name:String, IDs:Array<String>, uniqueID:Int, X:Float, Y:Float, Width:Int, Height:Int, Color:Int = 0xFFFFFF, ?returned:String)
 	{
 		var hint = createHint(IDs, uniqueID, X, Y, Width, Height, Color, returned);
-		hints.push(hint);
 		add(hint);
-		buttonFromName.set(name, hint);
-		buttonIndexFromName.set(name, countedIndex);
-		countedIndex++;
+		hintMap.set(name, hint);
+		hints.push(hint);
 	}
 
 	private function createHintGraphic(Width:Int, Height:Int, Color:Int = 0xFFFFFF, ?isLane:Bool = false):BitmapData
@@ -144,9 +141,7 @@ class Hitbox extends MobileInputHandler
 		super.destroy();
 		onButtonUp.destroy();
 		onButtonDown.destroy();
-
 		hints = [];
-		buttonIndexFromName = [];
-		buttonFromName = [];
+		hintMap.clear();
 	}
 }
