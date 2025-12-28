@@ -68,7 +68,8 @@ class MobilePad extends MobileInputHandler {
 					var btnColor = buttonData.color;
 					var btnX:Float = buttonData.x;
 					var btnY:Float = buttonData.y;
-					var btnReturn:String = buttonData.returnKey;
+					var btnReturn:String = "NONE";
+					if (buttonData.returnKey != null) btnReturn = buttonData.returnKey;
 
 					addButton(btnName, btnIDs, btnUniqueID, btnX, btnY, btnGraphic, btnScale, Util.colorFromString(btnColor), btnReturn, 'DPad');
 				}
@@ -90,7 +91,8 @@ class MobilePad extends MobileInputHandler {
 					var btnScale:Float = buttonData.scale;
 					var btnX:Float = buttonData.x;
 					var btnY:Float = buttonData.y;
-					var btnReturn:String = buttonData.returnKey;
+					var btnReturn:String = "NONE";
+					if (buttonData.returnKey != null) btnReturn = buttonData.returnKey;
 
 					addButton(btnName, btnIDs, btnUniqueID, btnX, btnY, btnGraphic, btnScale, Util.colorFromString(btnColor), btnReturn, 'Action');
 				}
@@ -104,7 +106,7 @@ class MobilePad extends MobileInputHandler {
 		instance = this;
 	}
 
-	public function addButton(name:String, IDs:Array<String>, ?uniqueID:Int = -1, X:Float, Y:Float, Graphic:String, ?Scale:Float = 1.0, ?Color:Int = 0xFFFFFF, ?returned:String, indexType:String = 'DPad') {
+	public function addButton(name:String, IDs:Array<String>, uniqueID:Int = -1, X:Float, Y:Float, Graphic:String, Scale:Float = 1.0, Color:Int = 0xFFFFFF, returned:String = "NONE", indexType:String = 'DPad') {
 		var button:MobileButton = createVirtualButton(X, Y, Graphic, Scale, Color, returned);
 		button.name = name;
 		button.uniqueID = uniqueID;
