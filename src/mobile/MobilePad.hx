@@ -105,7 +105,7 @@ class MobilePad extends MobileInputHandler {
 	}
 
 	public function addButton(name:String, IDs:Array<String>, ?uniqueID:Int = -1, X:Float, Y:Float, Graphic:String, ?Scale:Float = 1.0, ?Color:Int = 0xFFFFFF, ?returned:String, indexType:String = 'DPad') {
-		var button:MobileButton = createVirtualButton(X, Y, Graphic, Scale, Color, ?returned:String);
+		var button:MobileButton = createVirtualButton(X, Y, Graphic, Scale, Color, returned);
 		button.name = name;
 		button.uniqueID = uniqueID;
 		button.IDs = IDs;
