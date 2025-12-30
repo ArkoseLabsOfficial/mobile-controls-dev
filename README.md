@@ -131,7 +131,7 @@ class Controls {
 	];
 
 	public function justPressed(keyName:String) {
-		return justPressedKeys(mobilePadJustPressed(mobileBinds[keyName]) || joyStickJustPressed(keyName);
+		return mobilePadJustPressed(mobileBinds[keyName]) || joyStickJustPressed(keyName);
 	}
 
 	public function pressed(keyName:String) {
@@ -140,19 +140,6 @@ class Controls {
 	
 	public function released(keyName:String) {
 		return mobilePadJustReleased(mobileBinds[keyName]) || joyStickJustReleased(keyName);
-	}
-	
-	// KEYS
-	public function justPressedKeys(keyses:Array<FlxKey>) {
-		return FlxG.keys.anyJustPressed(keyses);
-	}
-
-	public function pressedKeys(keyses:Array<FlxKey>) {
-		return FlxG.keys.anyPressed(keyses);
-	}
-
-	public function releasedKeys(keyses:Array<FlxKey>) {
-		return FlxG.keys.anyJustReleased(keyses);
 	}
 
 	public var requestedInstance(get, default):Dynamic;
