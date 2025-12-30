@@ -63,115 +63,155 @@ class PlayState extends FlxState {
 		manager.addJoyStickCamera();
 	}
 	override function update(elapsed:Float) {
-		if (manager.mobilePad.getButtonFromName('buttonA').justPressed) {
+		//with using buttonIDs
+		if (manager.mobilePad.justPressed('A')) {
+			trace('hello from A');
+		}
+		//Alternative (buttonName special)
+		if (manager.mobilePad.getButton('buttonA').justPressed) {
 			trace('hello from buttonA');
 		}
 
-		if (manager.hitbox.getButtonFromName('buttonUp').justPressed) {
+		//with using buttonIDs
+		if (manager.hitbox.justPressed('up')) {
+			trace('hello from buttonUp');
+		}
+		//Alternative (buttonName special)
+		if (manager.hitbox.getButton('buttonUp').justPressed) {
 			trace('hello from buttonUp');
 		}
 
-		if (manager.joyStick.joyStickPressed('up')) {
+		if (manager.joyStick.pressed('up')) {
 			trace('hello from joyStick up');
 		}
 	}
 }
 
 // *
-// * A Example (Probably This Class Won't Work)
+// * An Example (Probably This Class Won't Work)
 // * src/Controls.hx
 // *
 
 import flixel.FlxG;
 
 class Controls {
-	public var requestedInstance(get, default):Dynamic;
-	public var LEFT:Bool = false;
-	public var RIGHT:Bool = false;
-	public var UP:Bool = false;
-	public var DOWN:Bool = false;
-	public var LEFT_P:Bool = false;
-	public var RIGHT_P:Bool = false;
-	public var UP_P:Bool = false;
-	public var DOWN_P:Bool = false;
-	public var LEFT_R:Bool = false;
-	public var RIGHT_R:Bool = false;
-	public var UP_R:Bool = false;
-	public var DOWN_R:Bool = false;
-	public static var mobileBinds:Map<String, Array<String>> = [
-		'up'			=> ['buttonUp'],
-		'left'			=> ['buttonLeft'],
-		'down'			=> ['buttonDown'],
-		'right'			=> ['buttonRight']
-	];
+	public var LEFT(get, never):Bool;
+	public var RIGHT(get, never):Bool;
+	public var UP(get, never):Bool;
+	public var DOWN(get, never):Bool;
+	public var LEFT_P(get, never):Bool;
+	public var RIGHT_P(get, never):Bool;
+	public var UP_P(get, never):Bool;
+	public var DOWN_P(get, never):Bool;
+	public var LEFT_R(get, never):Bool;
+	public var RIGHT_R(get, never):Bool;
+	public var UP_R(get, never):Bool;
+	public var DOWN_R(get, never):Bool;
+
+	public function get_LEFT() return justPressed('left');
+	public function get_RIGHT() return justPressed('right');
+	public function get_UP() return justPressed('up');
+	public function get_DOWN() return justPressed('down');
+	public function get_LEFT_P() return pressed('left');
+	public function get_RIGHT_P() return pressed('right');
+	public function get_UP_P() return pressed('up');
+	public function get_DOWN_P() return pressed('down');
+	public function get_LEFT_R() return justReleased('left');
+	public function get_RIGHT_R() return justReleased('right');
+	public function get_UP_R() return justReleased('up');
+	public function get_DOWN_R() return justReleased('down');
 
 	public function new() {}
-	public function initInput() {
-		LEFT = justPressed('left');
-		RIGHT = justPressed('right');
-		UP = justPressed('up');
-		DOWN = justPressed('down');
-		LEFT_P = pressed('left');
-		RIGHT_P = pressed('right');
-		UP_P = pressed('up');
-		DOWN_P = pressed('down');
-		LEFT_R = released('left');
-		RIGHT_R = released('right');
-		UP_R = released('up');
-		DOWN_R = released('down');
-	}
+
+	public static var mobileBinds:Map<String, Dynamic> = [
+		'up'			=> 'mpad_up',
+		'left'			=> 'mpad_left',
+		'down'			=> 'mpad_down',
+		'right'			=> ['mpad_right', 'mpad_a']
+	];
+
 	public function justPressed(keyName:String) {
-		return mobilePadJustPressed(mobileBinds[keyName]) || joyStickJustPressed(keyName);
+		return justPressedKeys(mobilePadJustPressed(mobileBinds[keyName]) || joyStickJustPressed(keyName);
 	}
+
 	public function pressed(keyName:String) {
 		return mobilePadPressed(mobileBinds[keyName]) || joyStickPressed(keyName);
 	}
+	
 	public function released(keyName:String) {
 		return mobilePadJustReleased(mobileBinds[keyName]) || joyStickJustReleased(keyName);
 	}
+	
+	// KEYS
+	public function justPressedKeys(keyses:Array<FlxKey>) {
+		return FlxG.keys.anyJustPressed(keyses);
+	}
+
+	public function pressedKeys(keyses:Array<FlxKey>) {
+		return FlxG.keys.anyPressed(keyses);
+	}
+
+	public function releasedKeys(keyses:Array<FlxKey>) {
+		return FlxG.keys.anyJustReleased(keyses);
+	}
+
+	public var requestedInstance(get, default):Dynamic;
+	public var mobileControls(get, never):Bool;
+
 	private function joyStickPressed(key:String):Bool
 	{
-		if (key != null && requestedInstance.manager.joyStick != null)
-			if (requestedInstance.manager.joyStick.joyStickPressed(key) == true)
-				return true;
-		return false;
-	}
-	private function joyStickJustPressed(key:String):Bool
-	{
-		if (key != null && requestedInstance.manager.joyStick != null)
-			if (requestedInstance.manager.joyStick.joyStickJustPressed(key) == true)
-				return true;
-		return false;
-	}
-	private function joyStickJustReleased(key:String):Bool
-	{
-		if (key != null && requestedInstance.manager.joyStick != null)
-			if (requestedInstance.manager.joyStick.joyStickJustReleased(key) == true)
-				return true;
-		return false;
-	}
-	private function mobilePadPressed(keys:Array<String>):Bool
-	{
-		if (keys != null && requestedInstance.manager.mobilePad != null)
-			if (requestedInstance.manager.mobilePad.buttonPressed(keys) == true)
-				return true;
-		return false;
-	}
-	private function mobilePadJustPressed(keys:Array<String>):Bool
-	{
-		if (keys != null && requestedInstance.manager.mobilePad != null)
-			if (requestedInstance.manager.mobilePad.buttonJustPressed(keys) == true)
-				return true;
-		return false;
-	}
-	private function mobilePadJustReleased(keys:Array<String>):Bool
-	{
-		if (keys != null && requestedInstance.manager.mobilePad != null)
-			if (requestedInstance.manager.mobilePad.buttonJustReleased(keys) == true)
+		if (key != null && requestedInstance.joyStick != null)
+			if (requestedInstance.joyStick.pressed(key) == true)
 				return true;
 
 		return false;
 	}
+
+	private function joyStickJustPressed(key:String):Bool
+	{
+		if (key != null && requestedInstance.joyStick != null)
+			if (requestedInstance.joyStick.justPressed(key) == true)
+				return true;
+
+		return false;
+	}
+
+	private function joyStickJustReleased(key:String):Bool
+	{
+		if (key != null && requestedInstance.joyStick != null)
+			if (requestedInstance.joyStick.justReleased(key) == true)
+				return true;
+
+		return false;
+	}
+
+	private function mobilePadPressed(keys:Array<String>):Bool
+	{
+		if (keys != null && requestedInstance.mobilePad != null)
+			if (requestedInstance.mobilePad.pressed(keys) == true)
+				return true;
+
+		return false;
+	}
+
+	private function mobilePadJustPressed(keys:Array<String>):Bool
+	{
+		if (keys != null && requestedInstance.mobilePad != null)
+			if (requestedInstance.mobilePad.justPressed(keys) == true)
+				return true;
+
+		return false;
+	}
+
+	private function mobilePadJustReleased(keys:Array<String>):Bool
+	{
+		if (keys != null && requestedInstance.mobilePad != null)
+			if (requestedInstance.mobilePad.justReleased(keys) == true)
+				return true;
+
+		return false;
+	}
+
 	@:noCompletion
 	private function get_requestedInstance():Dynamic
 	{

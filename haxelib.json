@@ -2,11 +2,11 @@
     "name": "mobile-controls",
     "description": "a Mobile Control Library, built for simplicity.",
     "license": "MIT",
-    "releasenote": "https://lib.haxe.org/p/mobile-controls/0.1.0/changelog",
+    "releasenote": "https://lib.haxe.org/p/mobile-controls/1.0.0/changelog",
     "contributors": [
         "KralOyuncu2010x"
     ],
-    "version": "0.1.0",
+    "version": "1.0.0",
     "url": "https://github.com/KralOyuncu2010x/mobile-controls",
     "classPath": "src",
     "tags": [

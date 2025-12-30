@@ -2,7 +2,7 @@
   "buttons": [
     {
       "button": "buttonUp",
-      "buttonIDs": ["buttonUp"],
+      "buttonIDs": ["up"],
       "graphic": "up",
       "x": -75,
       "y": 260,
@@ -11,7 +11,7 @@
     },
     {
       "button": "buttonLeft",
-      "buttonIDs": ["buttonLeft"],
+      "buttonIDs": ["left"],
       "graphic": "left",
       "x": -150,
       "y": 340,
@@ -20,7 +20,7 @@
     },
     {
       "button": "buttonRight",
-      "buttonIDs": ["buttonRight"],
+      "buttonIDs": ["right"],
       "graphic": "right",
       "x": 0,
       "y": 340,
@@ -29,7 +29,7 @@
     },
     {
       "button": "buttonDown",
-      "buttonIDs": ["buttonDown"],
+      "buttonIDs": ["down"],
       "graphic": "down",
       "x": -75,
       "y": 420,

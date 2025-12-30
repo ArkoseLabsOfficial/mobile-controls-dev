@@ -4,42 +4,40 @@ import flixel.FlxG;
 
 class Controls {
 	// walk shitttts
-	public var LEFT:Bool = false;
-	public var RIGHT:Bool = false;
-	public var UP:Bool = false;
-	public var DOWN:Bool = false;
-	public var LEFT_P:Bool = false;
-	public var RIGHT_P:Bool = false;
-	public var UP_P:Bool = false;
-	public var DOWN_P:Bool = false;
-	public var LEFT_R:Bool = false;
-	public var RIGHT_R:Bool = false;
-	public var UP_R:Bool = false;
-	public var DOWN_R:Bool = false;
+	public var LEFT(get, never):Bool;
+	public var RIGHT(get, never):Bool;
+	public var UP(get, never):Bool;
+	public var DOWN(get, never):Bool;
+	public var LEFT_P(get, never):Bool;
+	public var RIGHT_P(get, never):Bool;
+	public var UP_P(get, never):Bool;
+	public var DOWN_P(get, never):Bool;
+	public var LEFT_R(get, never):Bool;
+	public var RIGHT_R(get, never):Bool;
+	public var UP_R(get, never):Bool;
+	public var DOWN_R(get, never):Bool;
+
+	public function get_LEFT() return justPressed('left');
+	public function get_RIGHT() return justPressed('right');
+	public function get_UP() return justPressed('up');
+	public function get_DOWN() return justPressed('down');
+	public function get_LEFT_P() return pressed('left');
+	public function get_RIGHT_P() return pressed('right');
+	public function get_UP_P() return pressed('up');
+	public function get_DOWN_P() return pressed('down');
+	public function get_LEFT_R() return justReleased('left');
+	public function get_RIGHT_R() return justReleased('right');
+	public function get_UP_R() return justReleased('up');
+	public function get_DOWN_R() return justReleased('down');
 
 	public function new() {}
 
-	public static var mobileBinds:Map<String, Array<String>> = [
-		'up'			=> ['buttonUp'],
-		'left'			=> ['buttonLeft'],
-		'down'			=> ['buttonDown'],
-		'right'			=> ['buttonRight']
+	public static var mobileBinds:Map<String, Dynamic> = [
+		'up'			=> 'mpad_up',
+		'left'			=> 'mpad_left',
+		'down'			=> 'mpad_down',
+		'right'			=> ['mpad_right', 'mpad_a']
 	];
-
-	public function initInput() {
-		LEFT = justPressed('left');
-		RIGHT = justPressed('right');
-		UP = justPressed('up');
-		DOWN = justPressed('down');
-		LEFT_P = pressed('left');
-		RIGHT_P = pressed('right');
-		UP_P = pressed('up');
-		DOWN_P = pressed('down');
-		LEFT_R = released('left');
-		RIGHT_R = released('right');
-		UP_R = released('up');
-		DOWN_R = released('down');
-	}
 
 	public function justPressed(keyName:String) {
 		return justPressedKeys(mobilePadJustPressed(mobileBinds[keyName]) || joyStickJustPressed(keyName);
@@ -72,7 +70,7 @@ class Controls {
 	private function joyStickPressed(key:String):Bool
 	{
 		if (key != null && requestedInstance.joyStick != null)
-			if (requestedInstance.joyStick.joyStickPressed(key) == true)
+			if (requestedInstance.joyStick.pressed(key) == true)
 				return true;
 
 		return false;
@@ -81,7 +79,7 @@ class Controls {
 	private function joyStickJustPressed(key:String):Bool
 	{
 		if (key != null && requestedInstance.joyStick != null)
-			if (requestedInstance.joyStick.joyStickJustPressed(key) == true)
+			if (requestedInstance.joyStick.justPressed(key) == true)
 				return true;
 
 		return false;
@@ -90,7 +88,7 @@ class Controls {
 	private function joyStickJustReleased(key:String):Bool
 	{
 		if (key != null && requestedInstance.joyStick != null)
-			if (requestedInstance.joyStick.joyStickJustReleased(key) == true)
+			if (requestedInstance.joyStick.justReleased(key) == true)
 				return true;
 
 		return false;
@@ -99,7 +97,7 @@ class Controls {
 	private function mobilePadPressed(keys:Array<String>):Bool
 	{
 		if (keys != null && requestedInstance.mobilePad != null)
-			if (requestedInstance.mobilePad.buttonPressed(keys) == true)
+			if (requestedInstance.mobilePad.pressed(keys) == true)
 				return true;
 
 		return false;
@@ -108,7 +106,7 @@ class Controls {
 	private function mobilePadJustPressed(keys:Array<String>):Bool
 	{
 		if (keys != null && requestedInstance.mobilePad != null)
-			if (requestedInstance.mobilePad.buttonJustPressed(keys) == true)
+			if (requestedInstance.mobilePad.justPressed(keys) == true)
 				return true;
 
 		return false;
@@ -117,7 +115,7 @@ class Controls {
 	private function mobilePadJustReleased(keys:Array<String>):Bool
 	{
 		if (keys != null && requestedInstance.mobilePad != null)
-			if (requestedInstance.mobilePad.buttonJustReleased(keys) == true)
+			if (requestedInstance.mobilePad.justReleased(keys) == true)
 				return true;
 
 		return false;

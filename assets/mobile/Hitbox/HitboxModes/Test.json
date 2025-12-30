@@ -2,7 +2,7 @@
   "hints": [
     {
       "button": "buttonLeft",
-      "buttonIDs": ["buttonLeft"],
+      "buttonIDs": ["left"],
       "x": 0,
       "y": 0,
       "width": 320,
@@ -11,7 +11,7 @@
     },
     {
       "button": "buttonDown",
-      "buttonIDs": ["buttonDown"],
+      "buttonIDs": ["down"],
       "x": 320,
       "y": 0,
       "width": 320,
@@ -20,7 +20,7 @@
     },
     {
       "button": "buttonUp",
-      "buttonIDs": ["buttonUp"],
+      "buttonIDs": ["up"],
       "x": 640,
       "y": 0,
       "width": 320,
@@ -29,7 +29,7 @@
     },
     {
       "button": "buttonRight",
-      "buttonIDs": ["buttonRight"],
+      "buttonIDs": ["right"],
       "x": 960,
       "y": 0,
       "width": 320,

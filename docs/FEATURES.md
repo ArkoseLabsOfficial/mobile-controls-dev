@@ -3,7 +3,7 @@
 - [x] Custom Button IDs
 - - [x] String IDs
 - - [x] Unique ID (Added in 0.2.0)
-- [x] MobilePad/VirtualPad
+- [x] MobilePad
 - [x] Hitbox
 - [x] JoyStick
 - - [x] Improved/Optimized JoyStick (Added in 0.2.0)
