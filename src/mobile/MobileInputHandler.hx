@@ -47,7 +47,7 @@ class MobileInputHandler extends FlxTypedSpriteGroup<MobileButton>
 		for (button in Buttons) {
 			if (trackedButtons.exists(button)) {
 				if (state == RELEASED && trackedButtons.get(button).released ||
-				if (state == JUST_RELEASED && trackedButtons.get(button).justReleased ||
+				   state == JUST_RELEASED && trackedButtons.get(button).justReleased ||
 				   state == PRESSED && trackedButtons.get(button).pressed ||
 				   state == JUST_PRESSED && trackedButtons.get(button).justPressed)
 				{
