@@ -1,6 +1,6 @@
 # 1.0.0 (First Stable Release)
 
-- Mobile Control's variables changed, please update to newest variables.
+- Mobile Control's variables changed (update to newest variables).
 - Added `overlapsUltraComplex()` to touch class.
 - Mobile Controls optimized a little bit.
 - JoyStick Issues Fixed (Specifically Camera Zoom Issue Fixed).

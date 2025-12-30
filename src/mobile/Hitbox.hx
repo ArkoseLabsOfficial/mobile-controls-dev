@@ -12,7 +12,7 @@ import flixel.FlxCamera;
  * A zone with custom hint's (A hitbox).
  * It's really easy to customize the layout.
  *
- * @author KralOyuncu 2010x (ArkoseLabs)
+ * @author ArkoseLabs
  */
 class Hitbox extends MobileInputHandler
 {

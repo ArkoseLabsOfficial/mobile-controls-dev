@@ -12,7 +12,7 @@ import flixel.util.FlxColor;
  * A modified FlxVirtualPad works with IDs.
  * It's really easy to customize the layout.
  *
- * @author KralOyuncu 2010x (ArkoseLabs)
+ * @author ArkoseLabs
  */
 @:access(mobile.MobileButton)
 class MobilePad extends MobileInputHandler {

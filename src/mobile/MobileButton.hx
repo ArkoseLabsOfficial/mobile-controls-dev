@@ -25,7 +25,7 @@ import flixel.system.FlxSound;
 
 /**
  * A simple button class that calls a function when clicked by the touch.
- * @author: KralOyuncu2010x (ArkoseLabs)
+ * @author: ArkoseLabs
  */
 class MobileButton extends TypedMobileButton<FlxSprite>
 {

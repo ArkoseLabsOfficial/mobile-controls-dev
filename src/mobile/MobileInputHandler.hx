@@ -15,7 +15,7 @@ enum ButtonsStates
  * A handler for MobileButton.
  * If you don't know what are you doing, do not touch here.
  *
- * @author KralOyuncu 2010x (ArkoseLabs)
+ * @author ArkoseLabs
  */
 class MobileInputHandler extends FlxTypedSpriteGroup<MobileButton>
 {
@@ -33,6 +33,9 @@ class MobileInputHandler extends FlxTypedSpriteGroup<MobileButton>
 	public function justPressed(button:Dynamic):Bool
 		return checkButtonsState((Std.isOfType(button, Array) ? button : [button]), JUST_PRESSED);
 
+	public function released(button:Dynamic):Bool
+		return checkButtonsState((Std.isOfType(button, Array) ? button : [button]), RELEASED);
+
 	public function justReleased(button:Dynamic):Bool
 		return checkButtonsState((Std.isOfType(button, Array) ? button : [button]), JUST_RELEASED);
 
@@ -43,6 +46,7 @@ class MobileInputHandler extends FlxTypedSpriteGroup<MobileButton>
 
 		for (button in Buttons) {
 			if (trackedButtons.exists(button)) {
+				if (state == RELEASED && trackedButtons.get(button).released ||
 				if (state == JUST_RELEASED && trackedButtons.get(button).justReleased ||
 				   state == PRESSED && trackedButtons.get(button).pressed ||
 				   state == JUST_PRESSED && trackedButtons.get(button).justPressed)
@@ -67,6 +71,16 @@ class MobileInputHandler extends FlxTypedSpriteGroup<MobileButton>
 				{
 					if (!trackedButtons.exists(id))
 						trackedButtons.set(id, button);
+					else {
+						var numberString:String = '';
+						var number:Int = 0;
+						while(trackedButtons.exists(id + numberString)) {
+							numberString = (number != 0) ? '$number' : '';
+							number++;
+						}
+						if (!trackedButtons.exists(id + numberString))
+							trackedButtons.set(id + numberString, button);
+					}
 				}
 			}
 		});
