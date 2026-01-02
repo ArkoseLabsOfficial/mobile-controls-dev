@@ -58,9 +58,26 @@ class PlayState extends FlxState {
 		manager.addHitbox('Test');
 		manager.addHitboxCamera();
 
+		function onJoystickMove(angle:Float, strength:Float, directionID:Float, directionName:String):Void
+		{
+			trace('angle:$angle');
+			trace('strength:$strength');
+			trace('directionID:$directionID');
+			trace('directionName:$directionName');
+		}
+
 		/* JoyStick */
-		manager.addJoyStick(0, 0, 0, 0.25, 0.7);
+		//With Texture
+		manager.addJoyStick(0, 0, 'JoyStick/joystick', onJoystickMove);
+		//Without Texture
+		manager.addJoyStick(0, 0, null, onJoystickMove);
+
+		manager.joyStick.scale.set(0.7, 0.7);
 		manager.addJoyStickCamera();
+
+		/* Old/Legacy JoyStick (Not recommend to use, can be removed later) */
+		manager.addLegacyJoyStick(0, 0, 0, 0.25, 0.7);
+		manager.addLegacyJoyStickCamera();
 	}
 	override function update(elapsed:Float) {
 		//with using buttonIDs

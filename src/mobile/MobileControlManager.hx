@@ -19,6 +19,8 @@ class MobileControlManager {
 	public var mobilePadCam:FlxCamera;
 	public var joyStickCam:FlxCamera;
 	public var joyStick:JoyStick;
+	public var legacyJoyStickCam:FlxCamera;
+	public var legacyJoyStick:JoyStickLegacy;
 	public var hitboxCam:FlxCamera;
 	public var hitbox:Hitbox;
 
@@ -88,10 +90,10 @@ class MobileControlManager {
 		hitbox.cameras = [hitboxCam];
 	}
 
-	public function addJoyStick(x:Float, y:Float, radius:Float = 0, ease:Float = 0.25, size:Float = 1):Void
+	public function addJoyStick(x:Float = 0, y:Float = 0, ?graphic:String, ?onMove:Float->Float->Float->String->Void):Void
 	{
 		if (joyStick != null) removeJoyStick();
-		joyStick = new JoyStick(x, y, radius, ease, size);
+		joyStick = new JoyStick(x, y, graphic, onMove);
 		currentState.add(joyStick);
 	}
 
@@ -117,9 +119,39 @@ class MobileControlManager {
 		joyStick.cameras = [joyStickCam];
 	}
 
+	public function addLegacyJoyStick(x:Float, y:Float, radius:Float = 0, ease:Float = 0.25, size:Float = 1):Void
+	{
+		if (legacyJoyStick != null) removeLegacyJoyStick();
+		legacyJoyStick = new JoyStickLegacy(x, y, radius, ease, size);
+		currentState.add(legacyJoyStick);
+	}
+
+	public function removeLegacyJoyStick():Void
+	{
+		if (legacyJoyStick != null)
+		{
+			currentState.remove(legacyJoyStick);
+			legacyJoyStick = FlxDestroyUtil.destroy(legacyJoyStick);
+		}
+
+		if(legacyJoyStickCam != null)
+		{
+			FlxG.cameras.remove(legacyJoyStickCam);
+			legacyJoyStickCam = FlxDestroyUtil.destroy(legacyJoyStickCam);
+		}
+	}
+
+	public function addLegacyJoyStickCamera():Void {
+		legacyJoyStickCam = new FlxCamera();
+		legacyJoyStickCam.bgColor.alpha = 0;
+		FlxG.cameras.add(legacyJoyStickCam, false);
+		legacyJoyStick.cameras = [legacyJoyStickCam];
+	}
+
 	public function destroy():Void {
 		removeMobilePad();
 		removeHitbox();
 		removeJoyStick();
+		removeLegacyJoyStick();
 	}
 }

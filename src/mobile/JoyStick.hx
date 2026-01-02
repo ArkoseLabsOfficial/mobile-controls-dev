@@ -2,14 +2,14 @@ package mobile;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.group.FlxSpriteGroup;
+import flixel.group.FlxSpriteGroup.FlxTypedSpriteGroup;
 import flixel.input.touch.FlxTouch;
 import flixel.math.FlxAngle;
-import flixel.math.FlxMath;
 import flixel.math.FlxPoint;
-import flixel.math.FlxRect;
-import flixel.graphics.FlxGraphic;
+import flixel.util.FlxColor;
 import flixel.util.FlxDestroyUtil;
+import flixel.util.FlxSpriteUtil;
+import flixel.graphics.FlxGraphic;
 import flixel.graphics.frames.FlxAtlasFrames;
 import openfl.utils.Assets;
 import openfl.display.BitmapData;
@@ -18,321 +18,245 @@ import sys.io.File;
 import sys.FileSystem;
 #end
 
-class JoyStick extends FlxTypedSpriteGroup<MobileButton>
+using StringTools;
+
+/**
+ * A Virtual Joystick component for mobile devices.
+ * Processes touch input to provide directional vectors, angles, and movement strength.
+ */
+class JoyStick extends FlxTypedSpriteGroup<FlxSprite>
 {
-	public var deadZone = {x: 0.3, y: 0.3}; 
-	public var inputAngle:Float = 0;
-	public var intensity:Float = 0;
-	var easeSpeed:Float;
-	var radius:Float = 0;
+	/** The movable inner part of the joystick. **/
+	public var thumb:FlxSprite;
 
-	public var onPressed:Void->Void; 
+	/** The static background/outer ring of the joystick. **/
+	public var base:MobileButton;
 
-	public var status(get, set):Int; 
-	public var instance:MobileButton;
-	static inline var NORMAL:Int = MobileButton.NORMAL;
-	static inline var HIGHLIGHT:Int = MobileButton.HIGHLIGHT;
-	static inline var PRESSED:Int = MobileButton.PRESSED;
+	/** * Callback triggered during joystick movement.
+	 * Parameters: (angle:Float, strength:Float, directionID:Int, directionName:String)
+	 */
+	public var onMove:Float->Float->Float->String->Void;
 
-	static var analogs:Array<JoyStick> = [];
-	var currentTouch:FlxTouch;
-	var tempTouches:Array<FlxTouch> = [];
-	var zone:FlxRect = FlxRect.get();
+	/** If true, the thumb returns to the center position when the touch is released. **/
+	public var autoRecenter:Bool = true;
 
-	public var size(default, set):Float = 1;
-	function set_size(Value:Float) {
-		size = Value;
-		instance.scale.set(Value, Value);
-		if (instance.label != null)
-			instance.label.scale.set(Value, Value);
+	/** If true, the thumb stays locked at the maximum radius distance during movement. **/
+	public var stickToBorder:Bool = false;
 
-		if (instance != null && radius == 0)
-			radius = (instance.width * 0.5) * Value;
+	public var keepRadius:Bool;
 
-		zone.set(x - radius, y - radius, 2 * radius, 2 * radius);
-		return Value;
+	/** Movement constraint: 0 = Omni-directional, 1 = Vertical Only, 2 = Horizontal Only. **/
+	private var _direction:Int = 0;
+
+	/** The maximum allowed distance the thumb can travel from the center. **/
+	private var _radius:Float;
+
+	/** Reference to the specific touch input currently controlling this joystick. **/
+	private var _activeTouch:FlxTouch = null;
+
+	private var _lastScale:Float = 1;
+
+	/**
+	 * Creates a new JoyStick instance.
+	 * @param x Initial X position.
+	 * @param y Initial Y position.
+	 * @param graphic Optional path to the texture atlas (Sparrow format).
+	 * @param onMove Optional callback function for movement events.
+	 */
+	public function new(x:Float = 0, y:Float = 0, ?graphic:String, ?onMove:Float->Float->Float->String->Void)
+	{
+		super(x, y);
+		this.onMove = onMove;
+
+		// --- Base (Background) Setup ---
+		base = new MobileButton(0, 0);
+		if (graphic != null)
+			loadObjectGraphic(base, graphic, 'base');
+		else
+		{
+			// Create a default circular graphic if no asset is provided
+			var baseSize = 200;
+			base.makeGraphic(baseSize, baseSize, FlxColor.TRANSPARENT);
+			FlxSpriteUtil.drawCircle(base, baseSize / 2, baseSize / 2, baseSize / 2, 0xAA000000);
+			FlxSpriteUtil.drawCircle(base, baseSize / 2, baseSize / 2, (baseSize / 2) - 4, FlxColor.TRANSPARENT, {thickness: 4, color: FlxColor.WHITE});
+		}
+		add(base);
+
+		_radius = (Math.min(base.width, base.height) / 2);
+
+		// --- Thumb (Stick) Setup ---
+		thumb = new FlxSprite();
+		if (graphic != null)
+			loadObjectGraphic(thumb, graphic, 'thumb');
+		else
+		{
+			// Create a default white circle for the thumb stick
+			var thumbSize = Std.int(_radius * 0.5); 
+			thumb.makeGraphic(thumbSize, thumbSize, FlxColor.TRANSPARENT);
+			FlxSpriteUtil.drawCircle(thumb, thumbSize / 2, thumbSize / 2, thumbSize / 2, FlxColor.WHITE);
+		}
+		add(thumb);
+		
+		centerThumb();
 	}
 
-	public function new(?stickPath:String, X:Float = 0, Y:Float = 0, Radius:Float = 0, Ease:Float = 0.25, Size:Float = 1)
-	{
-		super(X, Y);
-		radius = Radius;
-		easeSpeed = FlxMath.bound(Ease, 0, 60 / FlxG.updateFramerate);
-		analogs.push(this);
-		_point = FlxPoint.get();
-		createInstance(); 
-		createZone();
-		size = Size;
-		scrollFactor.set();
-		moves = false;
-	}
-
-	function createInstance(?stickPath:String):Void
-	{
-		if (stickPath == null) stickPath = MobileConfig.mobileFolderPath + 'JoyStick/joystick';
-		var xmlFile:String = '${stickPath}.xml';
-		var pngFile:String = '${stickPath}.png';
-
-		instance = new MobileButton(0, 0);
-		instance.isJoyStick = true;
-		instance.statusIndicatorType = NONE;
+	/** Loads sprite graphics from the file system or assets using Sparrow Atlas format. **/
+	private function loadObjectGraphic(object:FlxSprite, graphic:String, img:String) {
+		if (!graphic.startsWith(MobileConfig.mobileFolderPath))
+			graphic = MobileConfig.mobileFolderPath + graphic;
 
 		#if mobile_controls_file_support
-		var xmlAndPngExists:Bool = false;
-		if(FileSystem.exists(xmlFile) && FileSystem.exists(pngFile)) xmlAndPngExists = true;
-
+		var xmlAndPngExists:Bool = (FileSystem.exists('$graphic.xml') && FileSystem.exists('$graphic.png'));
 		if (xmlAndPngExists)
-			instance.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('base')));
+			object.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(BitmapData.fromFile('$graphic.png'), File.getContent('$graphic.xml')).getByName(img)));
 		else #end
-			instance.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData(pngFile), Assets.getText(xmlFile)).getByName('base')));
-
-		instance.resetSizeFromFrame();
-		instance.x += -instance.width * 0.5;
-		instance.y += -instance.height * 0.5;
-		instance.scrollFactor.set();
-		instance.solid = false;
-
-		instance.label = new FlxSprite(0, 0);
-
-		#if mobile_controls_file_support
-		if (xmlAndPngExists)
-			instance.label.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(BitmapData.fromFile(pngFile), File.getContent(xmlFile)).getByName('thumb')));
-		else #end
-			instance.label.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData(pngFile), Assets.getText(xmlFile)).getByName('thumb')));
-
-		instance.label.resetSizeFromFrame();
-		instance.label.x += -instance.label.width * 0.5; 
-		instance.label.y += -instance.label.height * 0.5;
-		instance.label.scrollFactor.set();
-		instance.label.solid = false;
-
-		add(instance);
-
-		if (radius == 0)
-			radius = instance.width * 0.5;
-	}
-
-	public function createZone():Void
-	{
-		if (instance != null && radius == 0)
-			radius = instance.width * 0.5;
-
-		zone.set(x - radius, y - radius, 2 * radius, 2 * radius);
-	}
-
-	override public function destroy():Void
-	{
-		super.destroy();
-		zone = FlxDestroyUtil.put(zone);
-		analogs.remove(this);
-		instance = FlxDestroyUtil.destroy(instance);
-		currentTouch = null;
-		tempTouches = null;
-		onPressed = null; 
+			object.loadGraphic(FlxGraphic.fromFrame(FlxAtlasFrames.fromSparrow(Assets.getBitmapData('$graphic.png'), Assets.getText('$graphic.xml')).getByName(img)));
 	}
 
 	override public function update(elapsed:Float):Void
 	{
-		var offAll:Bool = true;
-
-		// There is no reason to get into the loop if their is already a pointer on the analog
-		if (currentTouch != null)
-		{
-			tempTouches.push(currentTouch);
-		}
-		else
-		{
-			for (touch in FlxG.touches.list)
-			{
-				var touchInserted:Bool = false;
-
-				for (analog in analogs)
-				{
-					if (analog == this && analog.currentTouch != touch && !touchInserted)
-					{
-						tempTouches.push(touch);
-						touchInserted = true;
-					}
-				}
-			}
-		}
-
-		for (touch in tempTouches)
-		{
-			_point.set(touch.screenX, touch.screenY);
-			final worldPos:FlxPoint = touch.getWorldPosition(camera, _point);
-
-			if (!updateAnalog(worldPos, touch.pressed, touch.justPressed, touch.justReleased, touch))
-			{
-				offAll = false;
-				break;
-			}
-		}
-
-		if ((status == HIGHLIGHT || status == NORMAL) && intensity != 0)
-		{
-			intensity -= intensity * easeSpeed * FlxG.updateFramerate / 60;
-
-			if (Math.abs(intensity) < 0.1)
-			{
-				intensity = 0;
-				inputAngle = 0;
-			}
-		}
-
-		instance.label.x = (x + Math.cos(inputAngle) * intensity * radius - (instance.label.width * 0.5));
-		instance.label.y = (y + Math.sin(inputAngle) * intensity * radius - (instance.label.height * 0.5));
-
-		if (offAll)
-			status = NORMAL;
-
-		tempTouches.splice(0, tempTouches.length);
-
 		super.update(elapsed);
-	}
 
-	function updateAnalog(TouchPoint:FlxPoint, Pressed:Bool, JustPressed:Bool, JustReleased:Bool, Touch:FlxTouch):Bool
-	{
-		var offAll:Bool = true;
+		if (_lastScale != scale.x && !keepRadius) {
+			_lastScale = scale.x;
+			_radius = (Math.min(base.width, base.height) / 2) * _lastScale;
+		}
 
-		if (zone.containsPoint(TouchPoint) || status == PRESSED)
+		// Attempt to capture a touch input if none is currently active
+		if (_activeTouch == null)
 		{
-			offAll = false;
-
-			if (status == PRESSED) instance.onDownHandler();
-
-			if (Pressed)
+			if (base.justPressed)
 			{
-				if (Touch != null)
-					currentTouch = Touch;
-
-				status = PRESSED;
-
-				if (JustPressed) instance.onDown.fire(); 
-
-				if (status == PRESSED)
-				{
-					if (onPressed != null)
-						onPressed(); 
-
-					var dx:Float = TouchPoint.x - x;
-					var dy:Float = TouchPoint.y - y;
-
-					var dist:Float = Math.sqrt(dx * dx + dy * dy);
-
-					if (dist < 1)
-						dist = 0;
-
-					inputAngle = Math.atan2(dy, dx);
-					intensity = Math.min(radius, dist) / radius;
-
-					acceleration.x = Math.cos(inputAngle) * intensity;
-					acceleration.y = Math.sin(inputAngle) * intensity;
-				}
-			}
-			else if (JustReleased && status == PRESSED)
-			{
-				currentTouch = null;
-				status = HIGHLIGHT;
-
-				instance.onUp.fire();
-				acceleration.set();
-			}
-
-			if (status == NORMAL)
-			{
-				status = HIGHLIGHT;
+				@:privateAccess
+				_activeTouch = cast base.currentInput;
 			}
 		}
 
-		return offAll;
-	}
-
-	function get_status():Int return instance.status;
-	function set_status(Value:Int):Int return instance.status = Value;
-
-	override public function set_x(X:Float):Float
-	{
-		super.set_x(X);
-		createZone();
-		return X;
-	}
-
-	override public function set_y(Y:Float):Float
-	{
-		super.set_y(Y);
-		createZone();
-		return Y;
-	}
-
-	public var up(get, never):Bool;
-	function get_up():Bool
-	{
-		if (status != PRESSED) return false;
-		return intensity > deadZone.y && (Math.sin(inputAngle) < -deadZone.y); 
-	}
-
-	public var down(get, never):Bool;
-	function get_down():Bool
-	{
-		if (status != PRESSED) return false;
-		return Math.sin(inputAngle) > deadZone.y;
-	}
-
-	public var left(get, never):Bool;
-	function get_left():Bool
-	{
-		if (status != PRESSED) return false;
-		return Math.cos(inputAngle) < -deadZone.x;
-	}
-
-	public var right(get, never):Bool;
-	function get_right():Bool
-	{
-		if (status != PRESSED) return false;
-		return Math.cos(inputAngle) > deadZone.x;
-	}
-
-	public function justReleased(Direction:String, Threshold:Float = 0.5):Bool {
-		if (currentTouch != null && currentTouch.justReleased && status == HIGHLIGHT)
+		// Process the active touch input
+		if (_activeTouch != null)
 		{
-			switch (Direction.toLowerCase())
+			if (_activeTouch.released)
 			{
-				case 'up': return up;
-				case 'down': return down;
-				case 'left': return left;
-				case 'right': return right;
-				default: return false;
+				// Reset state when the touch is lifted
+				_activeTouch = null;
+				direction = [0, 'NONE'];
+				if (autoRecenter) centerThumb();
+				if (onMove != null) onMove(0, 0, 0, 'NONE');
 			}
-		} else
-			return false;
-	}
-	public function justPressed(Direction:String, Threshold:Float = 0.5):Bool {
-		if (currentTouch != null && currentTouch.justPressed && status == PRESSED)
-		{
-			switch (Direction.toLowerCase())
+			else
 			{
-				case 'up': return up;
-				case 'down': return down;
-				case 'left': return left;
-				case 'right': return right;
-				default: return false;
+				// Handle movement logic based on current touch position
+				handleInputDrag(_activeTouch.getWorldPosition(camera));
 			}
-		} else
-			return false;
+		}
 	}
 
-	public function pressed(Direction:String, Threshold:Float = 0.5):Bool {
-		if (status == PRESSED) {
-			switch (Direction.toLowerCase())
-			{
-				case 'up': return up;
-				case 'down': return down;
-				case 'left': return left;
-				case 'right': return right;
-				default: return false;
-			}
-		} else
-			return false;
+	/**
+	 * Calculates thumb position, angle, and strength based on world coordinates.
+	 * @param inputPos The current world position of the touch input.
+	 */
+	private function handleInputDrag(inputPos:FlxPoint):Void
+	{
+		var center = getBaseCenter();
+		
+		var dx:Float = 0;
+		var dy:Float = 0;
+
+		// Apply directional axis constraints
+		if (_direction == 0 || _direction == 2) dx = inputPos.x - center.x;
+		if (_direction == 0 || _direction == 1) dy = inputPos.y - center.y;
+
+		var angleRad = Math.atan2(dy, dx);
+		var dist = Math.sqrt(dx * dx + dy * dy);
+
+		// Clamp the thumb within the joystick's radius
+		if (dist > _radius || (stickToBorder && dist != 0))
+			dist = _radius;
+
+		var newX = center.x + Math.cos(angleRad) * dist;
+		var newY = center.y + Math.sin(angleRad) * dist;
+
+		updateThumbPosition(newX, newY);
+
+		// Normalize strength (0-100) and convert angle to degrees (0-360)
+		var strength = (dist / _radius) * 100;
+		var protractorAngle = Math.atan2(-dy, dx) * FlxAngle.TO_DEG;
+		if (protractorAngle < 0) protractorAngle += 360;
+
+		updateCurrentDirection(protractorAngle, strength);
+
+		if (onMove != null)
+			onMove(protractorAngle, strength, direction[0], direction[1]);
+
+		inputPos.put();
+		center.put();
+	}
+
+	/** Snaps the thumb back to the center of the base. **/
+	private function centerThumb():Void
+	{
+		var center = getBaseCenter();
+		updateThumbPosition(center.x, center.y);
+		center.put();
+	}
+
+	/** Updates the visual X/Y coordinates of the thumb sprite. **/
+	private function updateThumbPosition(xPos:Float, yPos:Float):Void
+	{
+		thumb.x = xPos - (thumb.width / 2);
+		thumb.y = yPos - (thumb.height / 2);
+	}
+
+	/** Returns the center coordinate of the joystick base as a FlxPoint. **/
+	public function getBaseCenter():FlxPoint
+	{
+		return FlxPoint.get(base.x + base.width / 2, base.y + base.height / 2);
+	}
+
+	// --- Input State Helpers (Directional Checks) ---
+	public function pressed(?pos:String):Bool {
+		return (_activeTouch != null && (pos == null || Std.string(direction[1]).contains(pos.toUpperCase())));
+	}
+	public function justPressed(?pos:String):Bool {
+		return (base.justPressed && (pos == null || Std.string(direction[1]).contains(pos.toUpperCase())));
+	}
+	public function justReleased(?pos:String):Bool {
+		return (_activeTouch == null && base.justReleased && (pos == null || Std.string(direction[1]).contains(pos.toUpperCase())));
+	}
+	public function released(?pos:String):Bool {
+		return (_activeTouch == null && (pos == null || Std.string(direction[1]).contains(pos.toUpperCase())));
+	}
+
+	override public function destroy():Void
+	{
+		_activeTouch = null;
+		super.destroy();
+	}
+
+	/** The currently active direction stored as: [ID, Name] (e.g., [2, 'UP']) **/
+	public var direction:Array<Dynamic> = [0, 'NONE'];
+
+	/**
+	 * Maps the raw input angle to 8 cardinal and intercardinal directions.
+	 * @param angle The angle in degrees (0-360).
+	 * @param strength The pull strength percentage (0-100).
+	 */
+	private function updateCurrentDirection(angle:Float, strength:Float):Void
+	{
+		if (strength < 10) // Deadzone threshold to ignore accidental jitters
+		{
+			direction = [0, 'NONE'];
+			return;
+		}
+
+		// Divide 360 degrees into 8 slices of 45 degrees, with a 22.5 degree offset for centering
+		if (angle >= 112.5 && angle < 157.5) direction = [1, 'UP_LEFT'];
+		else if (angle >= 67.5 && angle < 112.5) direction = [2, 'UP'];
+		else if (angle >= 22.5 && angle < 67.5) direction = [3, 'UP_RIGHT'];
+		else if (angle >= 157.5 && angle < 202.5) direction = [4, 'LEFT'];
+		else if (angle >= 337.5 || angle < 22.5) direction = [5, 'RIGHT'];
+		else if (angle >= 202.5 && angle < 247.5) direction = [6, 'DOWN_LEFT'];
+		else if (angle >= 247.5 && angle < 292.5) direction = [7, 'DOWN'];
+		else if (angle >= 292.5 && angle < 337.5) direction = [8, 'DOWN_RIGHT'];
 	}
 }
